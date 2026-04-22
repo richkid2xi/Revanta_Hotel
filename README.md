@@ -1,16 +1,67 @@
-# React + Vite
+# Regional Feedback & Monitoring System 🏛️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A sophisticated, multi-platform feedback ecosystem designed for the Volta Regional Minister's office to streamline citizen engagement and service monitoring.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> [!CAUTION]
+> ### 🛑 PROPRIETARY & PRIVATE
+> Although this repository is hosted on a public platform for development tracking, the project is **strictly private**. 
+> 
+> **Reproduction, distribution, or copying of any part of this codebase, design system, or logic is strictly prohibited without explicit written permission from the owner.**
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🌟 Key Features
 
-## Expanding the ESLint configuration
+- **📊 Comprehensive Admin Dashboard**: Real-time visualization of citizen feedback and service ratings.
+- **📝 Multi-Step Feedback Form**: Interactive, user-friendly interface for citizens to submit reviews and suggestions.
+- **📱 QR Code Ecosystem**: Automated generation and tracking of service-specific QR codes for easy access.
+- **✅ Resolution Tracking**: Dedicated workflow for managing and resolving citizen concerns.
+- **🎨 Premium UI/UX**: Custom-built design system with fluid animations and responsive layouts.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Technology Stack
+
+- **Framework**: [React 19](https://react.dev/)
+- **Build Tool**: [Vite 8](https://vitejs.dev/)
+- **Routing**: [React Router 7](https://reactrouter.com/)
+- **Styling**: Vanilla CSS (Modular & Design Tokens)
+- **State Management**: React Context & Custom Hooks
+- **Icons**: Custom SVG Icon System
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (Latest LTS recommended)
+- npm
+
+### Installation
+
+1. Clone the repository (Access restricted to authorized personnel)
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## 📂 Project Structure
+
+```text
+src/
+├── components/     # Reusable UI components
+├── context/        # Global state and theme providers
+├── layouts/        # Page structural templates (Admin/Public)
+├── pages/          # Feature-specific page components
+│   ├── admin/      # Internal dashboard modules
+│   └── public/     # Guest-facing feedback interfaces
+├── store/          # Data persistence and logic
+└── styles/         # Global design system and variables
+```
+
+---
+
+*Copyright © 2026. All rights reserved.*

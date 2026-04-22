@@ -5,7 +5,7 @@ export const generateMockReviews = () => {
     ...Array(6).fill('read'),
     ...Array(21).fill('resolved')
   ];
-  
+
   const comments = [
     "Service was decent but the waiting time could be improved significantly.",
     "Excellent experience. The officer was very professional and the waiting time was minimal.",
@@ -34,7 +34,7 @@ export const generateMockReviews = () => {
 
   for (let i = 0; i < 34; i++) {
     const rawDate = new Date(baseDate.getTime() - i * 3600000 * 4.5 - Math.random() * 3600000);
-    
+
     const day = rawDate.getDate().toString().padStart(2, '0');
     const month = rawDate.toLocaleString('default', { month: 'long' });
     const year = rawDate.getFullYear();
@@ -42,11 +42,11 @@ export const generateMockReviews = () => {
     const minutes = rawDate.getMinutes().toString().padStart(2, '0');
     const dayName = rawDate.toLocaleString('default', { weekday: 'long' });
     const dateStr = `${dayName}, ${day} ${month} ${year} at ${hours}:${minutes}`;
-    const shortDateStr = `${day} ${month.slice(0,3)} ${year}, ${hours}:${minutes}`;
+    const shortDateStr = `${day} ${month.slice(0, 3)} ${year}, ${hours}:${minutes}`;
 
     const isAnon = i % 3 === 0;
     const rating = Math.floor(Math.random() * 5) + 1;
-    
+
     // resolved Date
     let resolvedDateStr = null;
     let rawResolvedDate = null;

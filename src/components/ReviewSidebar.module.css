@@ -188,25 +188,9 @@
   border-radius: var(--radius-md);
   padding: 16px;
   display: flex;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-
-.qIconBox {
-  width: 32px;
-  height: 32px;
-  background: rgba(76, 175, 80, 0.1);
-  border: 1px solid rgba(76, 175, 80, 0.15);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.qIconBox .material-icons-outlined {
-  color: #2E7D32;
-  font-size: 16px;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .qContent {
@@ -214,18 +198,20 @@
 }
 
 .qHeader {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+  color: var(--color-primary);
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
 .qText {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
   margin-bottom: 12px;
+  line-height: 1.4;
 }
 
 .qProgressRow {
@@ -236,21 +222,108 @@
 
 .progressBar {
   flex: 1;
-  height: 4px;
-  background: var(--color-border);
-  border-radius: 2px;
+  height: 6px;
+  background: var(--color-bg);
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: #F9A825;
+  background: var(--color-primary);
 }
 
 .qScoreText {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Pills for Services */
+.pillsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.pill[data-service="Room Stay"] { background: #0D9488; }
+.pill[data-service="Restaurant"] { background: #D97706; }
+.pill[data-service="Restaurant or Room Service"] { background: #D97706; }
+.pill[data-service="Conference"] { background: #2563EB; }
+.pill[data-service="Conference or Meeting Room"] { background: #2563EB; }
+.pill[data-service="Pool or Gym"] { background: #16A34A; }
+.pill[data-service="Spa"] { background: #9333EA; }
+.pill[data-service="Spa or Wellness"] { background: #9333EA; }
+.pill[data-service="Events"] { background: #EA580C; }
+.pill[data-service="Events or Banquet"] { background: #EA580C; }
+.pill[data-service="Other"] { background: #475569; }
+
+/* Service Section */
+.serviceSection {
+  margin-top: 8px;
+}
+
+.serviceQuestionsBox {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.serviceQRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.serviceQLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.serviceQScoreWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.miniProgressBar {
+  width: 60px;
+  height: 4px;
+  background: var(--color-bg);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.miniProgressFill {
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.serviceQScore {
+  font-family: 'Courier New', Courier, monospace;
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--color-text-primary);
+  min-width: 35px;
+  text-align: right;
 }
 
 /* Generic Box */
@@ -272,7 +345,7 @@
 }
 
 .genericBox .material-icons-outlined {
-  color: #4CAF50;
+  color: var(--color-primary);
   font-size: 20px;
 }
 

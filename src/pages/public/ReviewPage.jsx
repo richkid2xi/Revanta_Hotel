@@ -1,132 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addReview } from '../../store/reviewsStore';
+import { addReview, getHotelSettings } from '../../store/reviewsStore';
 import styles from './ReviewPage.module.css';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ALL_SERVICES = [
+  { id: 'roomStay',    label: 'Room Stay',                  icon: 'hotel' },
+  { id: 'conference',  label: 'Conference or Meeting Room', icon: 'meeting_room' },
+  { id: 'poolOrGym',   label: 'Pool or Gym',                icon: 'pool' },
+  { id: 'spa',         label: 'Spa or Wellness',            icon: 'spa' },
+  { id: 'events',      label: 'Events or Banquet',          icon: 'celebration' },
+  { id: 'other',       label: 'Other',                      icon: 'more_horiz' },
+];
+
+const MAIN_QUESTIONS = [
+  { id: 'q1', label: 'OVERALL SATISFACTION',          text: 'Overall, how satisfied are you with your experience?' },
+  { id: 'q2', label: 'STAFF ATTITUDE & PROFESSIONALISM', text: 'How would you rate the attitude and professionalism of our staff?' },
+  { id: 'q3', label: 'CLEANLINESS',                   text: 'How would you rate the cleanliness of our facilities?' },
+  { id: 'q4', label: 'VALUE FOR MONEY',                text: 'How would you rate the value for money?' },
+  { id: 'q5', label: 'OVERALL EXPERIENCE',            text: 'How smooth was your overall experience with us?' },
+];
+
+const RATING_OPTIONS = [
+  { value: 1, label: 'Very Dissatisfied', icon: 'sentiment_very_dissatisfied' },
+  { value: 2, label: 'Dissatisfied',      icon: 'sentiment_dissatisfied' },
+  { value: 3, label: 'Neutral',           icon: 'sentiment_neutral' },
+  { value: 4, label: 'Satisfied',         icon: 'sentiment_satisfied' },
+  { value: 5, label: 'Very Satisfied',    icon: 'sentiment_very_satisfied' },
+];
+
+function generateRefNumber() {
+  const digits = '0123456789';
+  const rand = (len) =>
+    Array.from({ length: len }, () => digits[Math.floor(Math.random() * digits.length)]).join('');
+  return `STY-2026-${rand(5)}`;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 function ReviewPage() {
   const navigate = useNavigate();
+  const settings = useMemo(() => getHotelSettings(), []);
+
+  // Active services (filtered by hotel settings)
+  const SERVICES = useMemo(() => {
+    return ALL_SERVICES.filter((s) => settings.services[s.id]);
+  }, [settings]);
+
+  // Form state
   const [step, setStep] = useState(0);
-  const [visitPurpose, setVisitPurpose] = useState('');
-  const [ratings, setRatings] = useState({ q1: 0, q2: 0, q3: 0, q4: 0, q5: 0 });
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [mainRatings, setMainRatings] = useState({});
   const [comment, setComment] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [contact, setContact] = useState({ name: '', phone: '', email: '' });
+  const [showValidationError, setShowValidationError] = useState(false);
 
-  const TOTAL_STEPS = 9;
+  const [refNumber] = useState(generateRefNumber);
 
-  // Questions definitions (Steps 2-6)
-  const QUESTIONS = [
-    { id: 'q1', label: 'Overall Satisfaction', text: 'Overall, how satisfied are you with your visit today?' },
-    { id: 'q2', label: 'Staff Professionalism', text: 'How would you rate the attitude and professionalism of the staff you interacted with?' },
-    { id: 'q3', label: 'Waiting Time', text: 'How long did you wait before you were attended to?' },
-    { id: 'q4', label: 'Progress Made', text: 'Were you able to resolve or make progress on the reason you came today?' },
-    { id: 'q5', label: 'Office Cleanliness', text: 'How would you rate the cleanliness and general environment of the office?' },
-  ];
+  // ─── Dynamic step list ─────────────────────────────────────────────────────
+  const dynamicSteps = useMemo(() => {
+    const steps = [];
+    steps.push({ type: 'welcome' });
+    steps.push({ type: 'serviceSelection' });
+    MAIN_QUESTIONS.forEach((q, idx) => steps.push({ type: 'mainQ', data: q, index: idx + 1 }));
 
-  const handleNext = () => setStep(s => s + 1);
-  const handleBack = () => setStep(s => s - 1);
+    steps.push({ type: 'comment' });
+    steps.push({ type: 'contact' });
+    steps.push({ type: 'summary' });
+    return steps;
+  }, [selectedServices]);
 
-  const handleSubmit = async () => {
+  const currentStepData = dynamicSteps[step];
+  const TOTAL_STEPS = dynamicSteps.length - 1;
+  const progressPercent = Math.round((step / TOTAL_STEPS) * 100);
+
+  // ─── Navigation ────────────────────────────────────────────────────────────
+  const handleNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  const handleBack = () => setStep((s) => Math.max(s - 1, 1));
+
+  const handleContinue = () => {
+    if (selectedServices.length === 0) {
+      setShowValidationError(true);
+    } else {
+      setShowValidationError(false);
+      handleNext();
+    }
+  };
+
+  // ─── Rating handlers ────────────────────────────────────────────────────────
+  const toggleService = (label) =>
+    setSelectedServices((prev) =>
+      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
+    );
+
+  const handleMainRating = (id, val) =>
+    setMainRatings((prev) => ({ ...prev, [id]: val }));
+
+  // ─── Submit ─────────────────────────────────────────────────────────────────
+  const handleSubmit = () => {
     const now = new Date();
-    const day = now.getDate().toString().padStart(2, '0');
-    const month = now.toLocaleString('default', { month: 'long' });
-    const year = now.getFullYear();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const mins = now.getMinutes().toString().padStart(2, '0');
-    const dayName = now.toLocaleString('default', { weekday: 'long' });
+    const pad = (n) => String(n).padStart(2, '0');
 
     const reviewData = {
-      id: refNumber,
-      rawDate: now.getTime(),
-      date: `${dayName}, ${day} ${month} ${year} at ${hours}:${mins}`,
-      shortDate: `${day} ${month.slice(0, 3)} ${year}, ${hours}:${mins}`,
-      rating: Math.round(Object.values(ratings).reduce((a, b) => a + b, 0) / Object.values(ratings).filter(v => v > 0).length),
-      status: 'unread',
+      id:              refNumber,
+      rawDate:         now.getTime(),
+      date:            `${now.toLocaleString('default', { weekday: 'long' })}, ${pad(now.getDate())} ${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()} at ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      shortDate:       `${pad(now.getDate())} ${now.toLocaleString('default', { month: 'short' })} ${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      rating:          mainRatings['q1'] || 0,
+      status:          'unread',
       isAnonymous,
-      purpose: visitPurpose,
-      text: comment.trim() || 'No additional comments.',
-      author: isAnonymous ? null : { ...contact },
-      questions: QUESTIONS.map((q) => ({
-        label: q.label,
-        text: q.text,
-        score: ratings[q.id],
-      })),
-      notes: '',
+      servicesSelected: selectedServices,
+      text:            comment.trim() || 'No additional comments.',
+      author:          isAnonymous ? null : { ...contact },
+      questions:       MAIN_QUESTIONS.map((q) => ({ label: q.label, text: q.text, score: mainRatings[q.id] })),
+      notes:           '',
       rawResolvedDate: null,
       resolvedDateStr: null,
     };
 
     addReview(reviewData);
-    navigate('/thank-you', { 
-      state: { 
-        ref: refNumber, 
-        name: isAnonymous ? null : contact.name 
-      } 
-    });
+    navigate('/thank-you', { state: { ref: refNumber, name: isAnonymous ? null : contact.name } });
   };
 
-  const handleRatingSelect = (qId, val) => {
-    setRatings(prev => ({ ...prev, [qId]: val }));
-  };
-
-  const RATING_OPTIONS = [
-    { value: 1, label: 'Very Dissatisfied', icon: 'sentiment_very_dissatisfied' },
-    { value: 2, label: 'Dissatisfied',      icon: 'sentiment_dissatisfied' },
-    { value: 3, label: 'Neutral',           icon: 'sentiment_neutral' },
-    { value: 4, label: 'Satisfied',         icon: 'sentiment_satisfied' },
-    { value: 5, label: 'Very Satisfied',    icon: 'sentiment_very_satisfied' },
-  ];
-
-  // Suggestions for chips
-  const SUGGESTIONS = [
-    "Collect birth certificate",
-    "Business permit renewal",
-    "Meet with official",
-    "Ask about land documents",
-    "File a complaint"
-  ];
-
-  // Generate a random ref for the footer
-  const [refNumber] = useState(() => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const rand = (len) => Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    return `REF-2026-${rand(4)}-${rand(4)}`;
-  });
-
-  const progressPercent = Math.round((step / TOTAL_STEPS) * 100);
-
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      {/* ─── Top Progress Bar (Steps 1+) ─── */}
-      {step > 0 && (
+
+      {/* ── Top Progress Bar ── */}
+      {step > 0 && step <= TOTAL_STEPS && (
         <div className={styles.topProgressWrap}>
           <div className={styles.topProgressText}>
             <span>
-              {step === 1 && 'Visit Purpose'}
-              {step >= 2 && step <= 6 && `Question ${step - 1} of 5`}
-              {step === 7 && 'Written Feedback'}
-              {step === 8 && 'Contact Info'}
-              {step === 9 && 'Review & Submit'}
+              {currentStepData.type === 'serviceSelection' && 'Experience'}
+              {currentStepData.type === 'mainQ'            && `General Survey ${currentStepData.index}/5`}
+              {currentStepData.type === 'comment'          && 'Final Feedback'}
+              {currentStepData.type === 'contact'          && 'Contact Info'}
+              {currentStepData.type === 'summary'          && 'Review'}
             </span>
             <span>{progressPercent}%</span>
           </div>
           <div className={styles.progressTrack}>
-            <div 
-              className={styles.progressFill} 
-              style={{ width: `${progressPercent}%` }} 
-            />
+            <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       )}
 
-      {/* ─── Landing Page (Step 0) ─── */}
-      {step === 0 && (
+      {/* ── Step 0: Welcome ── */}
+      {currentStepData.type === 'welcome' && (
         <div className={styles.landingContainer}>
           <div className={styles.brandGroup}>
             <h1 className={styles.mainLogo}>Revanta</h1>
             <div className={styles.officeBadge}>
-              <span className="material-icons-round">home_work</span>
-              <span>REGIONAL MINISTER'S OFFICE</span>
+              <span className="material-icons-round">hotel</span>
+              <span>{settings.name}</span>
             </div>
           </div>
 
@@ -134,74 +162,74 @@ function ReviewPage() {
             <h2 className={styles.mainTitle}>Share Your Experience</h2>
             <p className={styles.subtitle}>Your feedback helps us serve you better.</p>
             <p className={styles.description}>
-              This is completely anonymous unless you choose to share your contact details.
+              Help us improve our hospitality by sharing your thoughts about your recent stay.
             </p>
           </div>
 
           <button className={styles.startBtn} onClick={handleNext}>
-            Start Feedback
+            Start Review
           </button>
 
           <div className={styles.estimateTime}>
             <span className="material-icons-outlined">schedule</span>
-            <span>Estimated time: Less than 2 minutes</span>
+            <div className={styles.timeBadge}>Takes about 2 minutes</div>
           </div>
 
-          <div className={styles.landingDivider} />
+          <div className={styles.divider} />
 
           <div className={styles.footer}>
-            <p className={styles.footerNote}>Reference number generated automatically for your record.</p>
-            <p className={styles.refCode}>{refNumber}</p>
+            <p className={styles.footerNote}>Reference: {refNumber}</p>
           </div>
         </div>
       )}
 
-      {/* ─── Step 1: Visit Purpose ─── */}
-      {step === 1 && (
+      {/* ── Step 1: Service Selection ── */}
+      {currentStepData.type === 'serviceSelection' && (
         <div className={styles.stepContainer}>
-          <button className={styles.backBtn} onClick={handleBack}>
-            <span className="material-icons-round">arrow_back</span>
-            <span>Back</span>
-          </button>
+          {step > 1 && (
+            <button className={styles.backBtn} onClick={handleBack}>
+              <span className="material-icons-round">arrow_back</span>
+              <span>Back</span>
+            </button>
+          )}
 
           <div className={styles.stepContent}>
-            <h2 className={styles.stepHeading}>Why did you visit the office today?</h2>
-            <p className={styles.stepSubtitle}>Describe your visit in a few words — keep it brief.</p>
-            <p className={styles.stepHint}>e.g. "Collect birth certificate" or "Ask about permit"</p>
+            <h2 className={styles.serviceHeading}>Which services did you make use of?</h2>
+            <p className={styles.serviceSubtext}>Select all that apply.</p>
 
-            <div className={styles.inputWrapper}>
-              <input 
-                type="text"
-                className={styles.purposeInput}
-                placeholder="Short reason for your visit..."
-                value={visitPurpose}
-                onChange={(e) => setVisitPurpose(e.target.value.slice(0, 80))}
-                autoFocus
-              />
-              <div className={styles.inputFooter}>
-                <span>Keep it short — a few words is perfect.</span>
-                <span>{visitPurpose.length}/80</span>
-              </div>
+            <div className={styles.serviceGrid}>
+              {SERVICES.map((s) => {
+                const isActive = selectedServices.includes(s.label);
+                return (
+                  <div
+                    key={s.id}
+                    className={`${styles.serviceCard} ${isActive ? styles.serviceCardActive : ''}`}
+                    onClick={() => {
+                      toggleService(s.label);
+                      if (showValidationError) setShowValidationError(false);
+                    }}
+                  >
+                    {isActive && (
+                      <span className={`material-icons-round ${styles.checkIconSmall}`}>
+                        check_circle
+                      </span>
+                    )}
+                    <span className="material-icons-round">{s.icon}</span>
+                    <span className={styles.serviceLabel}>{s.label}</span>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className={styles.chipsContainer}>
-              {SUGGESTIONS.map((text) => (
-                <button 
-                  key={text} 
-                  className={styles.suggestionChip}
-                  onClick={() => setVisitPurpose(text)}
-                >
-                  {text}
-                </button>
-              ))}
-            </div>
+            {showValidationError && (
+              <p className={styles.validationText}>Please select at least one option to continue.</p>
+            )}
           </div>
 
           <div className={styles.actionFixed}>
-            <button 
-              className={styles.continueBtn} 
-              disabled={!visitPurpose.trim()}
-              onClick={handleNext}
+            <button
+              className={`${styles.continueBtn} ${selectedServices.length > 0 ? styles.continueBtnActive : ''}`}
+              onClick={handleContinue}
             >
               Continue
             </button>
@@ -209,29 +237,33 @@ function ReviewPage() {
         </div>
       )}
 
-      {/* ─── Step 2-6: Rating Questions ─── */}
-      {step >= 2 && step <= 6 && (
+      {/* ── Main Rating Questions ── */}
+      {currentStepData.type === 'mainQ' && (
         <div className={styles.stepContainer}>
-          <button className={styles.backBtn} onClick={handleBack}>
-            <span className="material-icons-round">arrow_back</span>
-            <span>Back</span>
-          </button>
+          {step > 1 && (
+            <button className={styles.backBtn} onClick={handleBack}>
+              <span className="material-icons-round">arrow_back</span>
+              <span>Back</span>
+            </button>
+          )}
 
           <div className={styles.stepContent}>
-            <div className={styles.qIndexBadge}>Q{step - 1}</div>
-            <h2 className={styles.stepHeading}>
-              {QUESTIONS[step - 2]?.text || "Question text awaiting..."}
-            </h2>
+            <div className={styles.qIndexBadge}>
+              {currentStepData.data.label}
+            </div>
+            <h2 className={styles.stepHeading}>{currentStepData.data.text}</h2>
 
             <div className={styles.optionsList}>
               {RATING_OPTIONS.map((opt) => {
-                const isActive = ratings[`q${step - 1}`] === opt.value;
+                const currentRating = mainRatings[currentStepData.data.id];
+                const isActive = currentRating === opt.value;
+
                 return (
-                  <button 
+                  <button
                     key={opt.value}
                     className={`${styles.ratingOptionCard} ${isActive ? styles.ratingOptionActive : ''}`}
                     data-rating={opt.value}
-                    onClick={() => handleRatingSelect(`q${step - 1}`, opt.value)}
+                    onClick={() => handleMainRating(currentStepData.data.id, opt.value)}
                   >
                     <span className="material-icons-round">{opt.icon}</span>
                     <span className={styles.ratingNumber}>{opt.value}</span>
@@ -243,54 +275,52 @@ function ReviewPage() {
           </div>
 
           <div className={styles.actionFixed}>
-            <button 
-              className={styles.continueBtn} 
-              disabled={!ratings[`q${step - 1}`]}
-              onClick={handleNext}
-            >
-              Continue
-            </button>
+            {(() => {
+              const hasSelected = mainRatings[currentStepData.data.id];
+              return (
+                <button
+                  className={`${styles.continueBtn} ${hasSelected ? styles.continueBtnActive : ''}`}
+                  onClick={() => { if (hasSelected) handleNext(); }}
+                >
+                  Continue
+                </button>
+              );
+            })()}
           </div>
         </div>
       )}
-      {/* ─── Step 7: Written Feedback ─── */}
-      {step === 7 && (
+
+      {/* ── Comment Step ── */}
+      {currentStepData.type === 'comment' && (
         <div className={styles.stepContainer}>
-          <button className={styles.backBtn} onClick={handleBack}>
-            <span className="material-icons-round">arrow_back</span>
-            <span>Back</span>
-          </button>
+          {step > 1 && (
+            <button className={styles.backBtn} onClick={handleBack}>
+              <span className="material-icons-round">arrow_back</span>
+              <span>Back</span>
+            </button>
+          )}
 
           <div className={styles.stepContent}>
             <h2 className={styles.stepHeading}>Would you like to tell us more?</h2>
             <p className={styles.stepSubtitle}>This field is optional. You can skip if you prefer.</p>
 
             <div className={styles.textareaWrapper}>
-              <textarea 
+              <textarea
                 className={styles.feedbackTextarea}
-                placeholder="You can describe your experience, mention something that went well, or suggest how we can improve."
+                placeholder="Share any specific details or suggestions..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value.slice(0, 600))}
               />
               <div className={styles.inputFooter}>
-                <span>Optional</span>
                 <span>{comment.length}/600</span>
               </div>
-            </div>
-
-            <div className={styles.infoBox}>
-              <span className="material-icons-outlined">info</span>
-              <p>Your written feedback helps us identify specific areas for improvement and recognize staff who serve you well.</p>
             </div>
           </div>
 
           <div className={styles.actionSplit}>
-            <button className={styles.skipBtn} onClick={handleNext}>
-              Skip
-            </button>
-            <button 
-              className={styles.continueBtn} 
-              style={{ backgroundColor: '#2E7D32', color: '#fff', cursor: 'pointer' }}
+            <button className={styles.skipBtn} onClick={handleNext}>Skip</button>
+            <button
+              className={`${styles.continueBtn} ${comment.trim() ? styles.continueBtnActive : ''}`}
               onClick={handleNext}
             >
               Continue
@@ -298,182 +328,124 @@ function ReviewPage() {
           </div>
         </div>
       )}
-      {/* ─── Step 8: Contact Info ─── */}
-      {step === 8 && (
+
+      {/* ── Contact Info Step ── */}
+      {currentStepData.type === 'contact' && (
         <div className={styles.stepContainer}>
-          <button className={styles.backBtn} onClick={handleBack}>
-            <span className="material-icons-round">arrow_back</span>
-            <span>Back</span>
-          </button>
+          {step > 1 && (
+            <button className={styles.backBtn} onClick={handleBack}>
+              <span className="material-icons-round">arrow_back</span>
+              <span>Back</span>
+            </button>
+          )}
 
           <div className={styles.stepContent}>
-            <h2 className={styles.stepHeading}>Would you like us to follow up with you?</h2>
-            <p className={styles.stepSubtitle}>Your feedback is anonymous by default.</p>
+            <h2 className={styles.stepHeading}>Would you like us to follow up?</h2>
 
-            <div className={`${styles.toggleCard} ${!isAnonymous ? styles.toggleCardActive : ''}`} onClick={() => setIsAnonymous(!isAnonymous)}>
+            <div
+              className={`${styles.toggleCard} ${!isAnonymous ? styles.toggleCardActive : ''}`}
+              onClick={() => setIsAnonymous((v) => !v)}
+            >
               <div className={`${styles.toggleSwitch} ${!isAnonymous ? styles.toggleSwitchActive : ''}`}>
                 <div className={styles.toggleKnob} />
               </div>
               <span className={styles.toggleLabel}>
-                {isAnonymous ? 'Anonymous — your identity will not be recorded' : 'I am willing to be contacted'}
+                {isAnonymous ? 'Stay Anonymous' : 'I am willing to be contacted'}
               </span>
             </div>
 
             {!isAnonymous && (
               <div className={styles.contactForm}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Full name</label>
-                  <input 
-                    type="text" 
-                    className={styles.contactInput}
-                    placeholder="Enter your full name"
-                    value={contact.name}
-                    onChange={(e) => setContact({...contact, name: e.target.value})}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Phone number</label>
-                  <input 
-                    type="tel" 
-                    className={styles.contactInput}
-                    placeholder="e.g. 0244 000 000"
-                    value={contact.phone}
-                    onChange={(e) => setContact({...contact, phone: e.target.value})}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Email</label>
-                  <input 
-                    type="email" 
-                    className={styles.contactInput}
-                    placeholder="your@email.com"
-                    value={contact.email}
-                    onChange={(e) => setContact({...contact, email: e.target.value})}
-                  />
-                </div>
+                {[
+                  { key: 'name',  label: 'Name',  type: 'text' },
+                  { key: 'phone', label: 'Phone', type: 'tel' },
+                  { key: 'email', label: 'Email', type: 'email' },
+                ].map(({ key, label, type }) => (
+                  <div key={key} className={styles.inputGroup}>
+                    <label className={styles.inputLabel}>{label}</label>
+                    <input
+                      type={type}
+                      className={styles.contactInput}
+                      value={contact[key]}
+                      onChange={(e) => setContact((prev) => ({ ...prev, [key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-
-            <div className={styles.infoBox} style={{ backgroundColor: 'rgba(76, 175, 80, 0.03)' }}>
-              <span className="material-icons-outlined" style={{ color: '#4CAF50' }}>lock</span>
-              <p>Your contact details will only be used if we need to follow up on your feedback. They will not be shared with anyone else.</p>
-            </div>
           </div>
 
           <div className={styles.actionFixed}>
-            <button 
-              className={styles.continueBtn} 
-              disabled={!isAnonymous && (!contact.name || !contact.phone || !contact.email)}
-              onClick={handleNext}
+            <button
+              className={`${styles.continueBtn} ${isAnonymous || (contact.name && contact.phone) ? styles.continueBtnActive : ''}`}
+              onClick={() => {
+                if (isAnonymous || (contact.name && contact.phone)) handleNext();
+              }}
             >
-              Continue
+              Review Submission
             </button>
           </div>
         </div>
       )}
-      {/* ─── Step 9: Review & Submit ─── */}
-      {step === 9 && (
+
+      {/* ── Summary & Submit ── */}
+      {currentStepData.type === 'summary' && (
         <div className={styles.stepContainer}>
-          <button className={styles.backBtn} onClick={handleBack}>
-            <span className="material-icons-round">arrow_back</span>
-            <span>Back</span>
-          </button>
+          {step > 1 && (
+            <button className={styles.backBtn} onClick={handleBack}>
+              <span className="material-icons-round">arrow_back</span>
+              <span>Back</span>
+            </button>
+          )}
 
           <div className={styles.stepContent}>
             <h2 className={styles.stepHeading}>Review your feedback</h2>
-            <p className={styles.stepSubtitle}>Please confirm everything is correct before submitting.</p>
 
             <div className={styles.summaryCard}>
+              {/* Services Used */}
               <div className={styles.summarySection}>
-                <div className={styles.summaryHeader}>
-                  <label>VISIT PURPOSE</label>
-                  <button className={styles.editBtn} onClick={() => setStep(1)}>
-                    <span className="material-icons-round">edit</span>
-                    Edit
-                  </button>
+                <label>SERVICES USED</label>
+                <div className={styles.pillsRow}>
+                  {selectedServices.map((s) => (
+                    <span key={s} className={styles.pill}>{s}</span>
+                  ))}
                 </div>
-                <p className={styles.summaryValue}>{visitPurpose}</p>
               </div>
 
+              {/* General Ratings */}
               <div className={styles.summarySection}>
-                <div className={styles.summaryHeader}>
-                  <label>YOUR RATINGS</label>
-                  <button className={styles.editBtn} onClick={() => setStep(2)}>
-                    <span className="material-icons-round">edit</span>
-                    Edit
-                  </button>
-                </div>
+                <label>GENERAL RATINGS</label>
                 <div className={styles.summaryRatingsList}>
-                  {QUESTIONS.map((q, idx) => {
-                    const score = ratings[q.id];
-                    const opt = RATING_OPTIONS.find(o => o.value === score);
-                    return (
-                      <div key={q.id} className={styles.summaryRatingRow}>
-                        <span className={styles.qNum}>Q{idx + 1}</span>
-                        <span className={styles.qLabel}>{q.text}</span>
-                        <div className={styles.qScore} data-rating={score}>
-                          <span className="material-icons-round">{opt?.icon}</span>
-                          <span>{score}/5</span>
-                        </div>
+                  {MAIN_QUESTIONS.map((q, idx) => (
+                    <div key={q.id} className={styles.summaryRatingRow}>
+                      <span className={styles.qNum}>Q{idx + 1}</span>
+                      <span className={styles.qLabel}>{q.text}</span>
+                      <div className={styles.qScore} data-rating={mainRatings[q.id]}>
+                        <span>{mainRatings[q.id]}/5</span>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className={styles.summarySection}>
-                <div className={styles.summaryHeader}>
+              {/* Comment */}
+              {comment && (
+                <div className={styles.summarySection}>
                   <label>COMMENT</label>
-                  <button className={styles.editBtn} onClick={() => setStep(7)}>
-                    <span className="material-icons-round">edit</span>
-                    Edit
-                  </button>
+                  <p className={styles.summaryValue}>{comment}</p>
                 </div>
-                <p className={styles.summaryValue} style={{ fontStyle: comment ? 'normal' : 'italic', color: comment ? '#fff' : 'var(--color-text-muted)' }}>
-                  {comment || 'No written comment provided'}
-                </p>
-              </div>
+              )}
 
-              <div className={styles.summarySection}>
-                <div className={styles.summaryHeader}>
-                  <label>FOLLOW-UP</label>
-                  <button className={styles.editBtn} onClick={() => setStep(8)}>
-                    <span className="material-icons-round">edit</span>
-                    Edit
-                  </button>
-                </div>
-                {isAnonymous ? (
-                  <div className={styles.summaryValue}>
-                    <span className="material-icons-round" style={{ fontSize: 16, verticalAlign: 'middle', marginRight: 8, opacity: 0.5 }}>visibility_off</span>
-                    Anonymous submission
-                  </div>
-                ) : (
-                  <div className={styles.summaryContact}>
-                    <div><span className="material-icons-round">person</span> {contact.name}</div>
-                    <div><span className="material-icons-round">call</span> {contact.phone}</div>
-                    <div><span className="material-icons-round">mail</span> {contact.email}</div>
-                  </div>
-                )}
-              </div>
-
+              {/* Reference Number */}
               <div className={styles.refBox}>
                 <label>YOUR REFERENCE NUMBER</label>
                 <div className={styles.refCodeLarge}>{refNumber}</div>
-                <p>Screenshot this for your records</p>
-              </div>
-
-              <div className={styles.infoBox} style={{ marginTop: 24, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                <span className="material-icons-outlined">info</span>
-                <p>Once submitted, your feedback goes directly to the Regional Minister's office for review and action.</p>
               </div>
             </div>
           </div>
 
           <div className={styles.actionFixed}>
-            <button 
-              className={styles.submitBtn} 
-              onClick={handleSubmit}
-            >
+            <button className={styles.submitBtn} onClick={handleSubmit}>
               <span className="material-icons-round">send</span>
               Submit Feedback
             </button>

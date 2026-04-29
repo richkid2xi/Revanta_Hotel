@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import styles from './LoginPage.module.css';
 
-const DEMO_USER = { username: 'minister.volta@gmail.com', password: 'Revantax01!' };
+const DEMO_USER = { username: 'admin@revanta.com', password: 'Revantax01!' };
 
 function LoginPage() {
   const { theme, toggleTheme } = useTheme();
@@ -37,6 +37,7 @@ function LoginPage() {
     await new Promise((r) => setTimeout(r, 900));
 
     if (username === DEMO_USER.username && password === DEMO_USER.password) {
+      localStorage.setItem('revanta_session_hotel_id', 'H001');
       navigate('/admin/overview');
     } else {
       setErrorType('invalid');
@@ -62,9 +63,11 @@ function LoginPage() {
       <div className={styles.card}>
         {/* Header */}
         <div className={styles.header}>
-          <h1 className={styles.brand}>Revanta</h1>
-          <p className={styles.office}>Volta Regional Minister's Office</p>
-          <p className={styles.system}>Citizen Feedback System</p>
+          <div className={styles.wordmark}>
+            <h1 className={styles.brand}>Revanta</h1>
+          </div>
+          <p className={styles.office}>The Grand Revanta</p>
+          <p className={styles.system}>Guest Feedback Platform</p>
         </div>
 
         {/* Form */}
@@ -94,9 +97,14 @@ function LoginPage() {
 
           {/* Password */}
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="login-password">
-              Password
-            </label>
+            <div className={styles.labelRow}>
+              <label className={styles.label} htmlFor="login-password">
+                Password
+              </label>
+              <button type="button" className={styles.inlineForgotBtn}>
+                Forgot?
+              </button>
+            </div>
             <div className={styles.inputWrapper}>
               <span className={`material-icons-outlined ${styles.inputIcon}`}>
                 lock
@@ -125,17 +133,17 @@ function LoginPage() {
             </div>
           </div>
 
-          {/* Error message — two variants */}
+          {/* Error message */}
           {errorType === 'empty' && (
             <div className={styles.errorMsg} role="alert">
               <span className="material-icons-round" style={{ fontSize: 16 }}>error_outline</span>
-              Please enter your username and password.
+              Enter credentials to continue.
             </div>
           )}
           {errorType === 'invalid' && (
             <div className={`${styles.errorMsg} ${styles.errorInvalid}`} role="alert">
               <span className="material-icons-round" style={{ fontSize: 16 }}>lock_person</span>
-              Incorrect username or password. Please try again.
+              Incorrect login details.
             </div>
           )}
 
@@ -146,34 +154,31 @@ function LoginPage() {
             className={styles.signInBtn}
             disabled={loading}
           >
-            {loading ? (
-              <span className={styles.spinner} aria-hidden="true" />
-            ) : null}
-            {loading ? 'Signing in…' : 'Sign In'}
-          </button>
-
-          {/* Forgot password */}
-          <button type="button" className={styles.forgotBtn}>
-            Forgot password?
+            {loading ? <span className={styles.spinner} aria-hidden="true" /> : null}
+            {loading ? 'Authenticating…' : 'Sign In'}
           </button>
         </form>
 
+        <div className={styles.signupPrompt}>
+          New to Revanta? <button className={styles.signupLink} onClick={() => navigate('/signup')}>Create your hotel account</button>
+        </div>
+
         {/* Demo account box */}
         <div className={styles.demoBox}>
-          <span className={styles.demoLabel}>Demo Account</span>
-          <div className={styles.demoCredentials}>
-            <div className={styles.demoCreds}>
-              <code className={styles.demoCode}>{DEMO_USER.username}</code>
-              <code className={styles.demoCode}>{DEMO_USER.password}</code>
-            </div>
+          <div className={styles.demoHeader}>
+            <span className={styles.demoLabel}>Demo Account</span>
             <button
               id="btn-use-demo"
               type="button"
               className={styles.useThisBtn}
               onClick={fillDemo}
             >
-              Use this
+              Autofill
             </button>
+          </div>
+          <div className={styles.demoCredentials}>
+            <code className={styles.demoCode}>{DEMO_USER.username}</code>
+            <code className={styles.demoCode}>{DEMO_USER.password}</code>
           </div>
         </div>
       </div>

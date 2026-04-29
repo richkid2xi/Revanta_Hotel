@@ -20,12 +20,11 @@ function ThankYouPage() {
         
         <div className={styles.textGroup}>
           <p className={styles.subtitle}>
-            Your response has been received by the<br />
-            Regional Minister's office.
+            Thank you for staying with us. Your feedback has been received by the hotel management team.
           </p>
           <p className={styles.description}>
-            Your feedback contributes to better public service for<br />
-            all citizens.
+            Your feedback helps us provide the best experience for<br />
+            all our guests.
           </p>
         </div>
 

@@ -6,8 +6,8 @@ function LandingPage() {
       <span className="material-icons-round" style={{ fontSize: 56, color: 'var(--color-primary)' }}>
         public
       </span>
-      <h1 className={styles.title}>Volta Region</h1>
-      <p className={styles.subtitle}>Guest &amp; Customer Review System</p>
+      <h1 className={styles.title}>HOTEL NAME</h1>
+      <p className={styles.subtitle}>Guest Experience Management Platform</p>
       <p className={styles.placeholder}>
         <span className="material-icons-outlined" style={{ verticalAlign: 'middle', marginRight: 6 }}>
           construction

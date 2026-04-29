@@ -1,7 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getReviews, updateReview as storeUpdateReview } from '../../store/reviewsStore';
-import { useState } from 'react';
+import { getReviews, updateReview as storeUpdateReview, getHotelSettings } from '../../store/reviewsStore';
 import styles from './DashboardPage.module.css';
 
 /* ── Star Rating ───────────────────────────────────────── */
@@ -44,8 +43,15 @@ function getSatisfactionClass(score, styles) {
 /* ── Dashboard Page ────────────────────────────────────── */
 function DashboardPage() {
   const today = useMemo(() => formatDate(), []);
-  const navigate = useNavigate();
   const [allReviews, setAllReviews] = useState(() => getReviews());
+  const [hotelName, setHotelName] = useState(() => getHotelSettings().name);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleSettingsUpdate = () => setHotelName(getHotelSettings().name);
+    window.addEventListener('revanta_settings_updated', handleSettingsUpdate);
+    return () => window.removeEventListener('revanta_settings_updated', handleSettingsUpdate);
+  }, []);
 
   const stats = useMemo(() => {
     const total = allReviews.length;
@@ -53,10 +59,10 @@ function DashboardPage() {
     const read = allReviews.filter(r => r.status === 'read').length;
     const resolved = allReviews.filter(r => r.status === 'resolved').length;
     return [
-      { id: 'total',    label: 'Total Received', value: total,    icon: 'inbox',              color: 'neutral' },
-      { id: 'unread',   label: 'Unread',         value: unread,   icon: 'mark_email_unread',  color: 'amber',   sub: 'Requires attention' },
-      { id: 'read',     label: 'Read',           value: read,     icon: 'drafts',             color: 'neutral', sub: 'Acknowledged' },
-      { id: 'resolved', label: 'Resolved',       value: resolved, icon: 'check_circle',       color: 'green',   sub: 'Closed items' },
+      { id: 'total',    label: 'Total Reviews',  value: total,    icon: 'hotel_class',        color: 'neutral' },
+      { id: 'unread',   label: 'Unread',         value: unread,   icon: 'mark_email_unread',  color: 'amber',   sub: 'Needs response' },
+      { id: 'read',     label: 'Read',           value: read,     icon: 'drafts',             color: 'neutral', sub: 'Reviewed' },
+      { id: 'resolved', label: 'Resolved',       value: resolved, icon: 'check_circle',       color: 'green',   sub: 'Closed cases' },
     ];
   }, [allReviews]);
 
@@ -87,7 +93,7 @@ function DashboardPage() {
         <div>
           <h1 className={styles.pageTitle}>Overview</h1>
           <p className={styles.pageSubtitle}>
-            Volta Regional Minister&apos;s Office&nbsp;·&nbsp;Citizen Feedback Dashboard
+            <span style={{ textTransform: 'uppercase' }}>{hotelName}</span>&nbsp;·&nbsp;Guest Review Dashboard
           </p>
         </div>
         <div className={styles.dateBadge}>
@@ -124,7 +130,7 @@ function DashboardPage() {
               <div className={styles.scoreDetails}>
                 <StarRating rating={Number(avgScore)} size={22} />
                 <span className={styles.scoreMeta}>
-                  out of 5.0&nbsp;·&nbsp;{allReviews.filter(r => r.status !== 'resolved').length} submissions
+                  out of 5.0&nbsp;·&nbsp;{allReviews.filter(r => r.status !== 'resolved').length} reviews
                 </span>
               </div>
             </div>
@@ -138,7 +144,7 @@ function DashboardPage() {
       {/* ── Recent submissions ───────────────────────────── */}
       <div className={styles.recentSection}>
         <div className={styles.recentHeader}>
-          <h2 className={styles.sectionTitle}>Recent Submissions</h2>
+          <h2 className={styles.sectionTitle}>Recent Guest Reviews</h2>
           <Link to="/admin/reviews" className={styles.viewAll}>
             View all <span className="material-icons-round" style={{ fontSize: 16 }}>arrow_forward</span>
           </Link>
@@ -153,11 +159,27 @@ function DashboardPage() {
                 key={sub.id}
                 submission={sub}
                 onUpdate={handleUpdateReview}
-                onOpen={() => navigate('/admin/reviews')}
+                onOpen={() => navigate('/admin/reviews', { state: { openReviewId: sub.id } })}
               />
             ))
           )}
         </div>
+      </div>
+
+      {/* ── QR Code shortcut ── */}
+      <div className={styles.qrShortcutCard}>
+        <div className={styles.qrShortcutLeft}>
+          <div className={styles.qrShortcutIcon}>
+            <span className="material-icons-round">qr_code_2</span>
+          </div>
+          <div>
+            <h3 className={styles.qrShortcutTitle}>Feedback QR Code</h3>
+            <p className={styles.qrShortcutDesc}>Your feedback QR code is ready. Print it and display it at your service points.</p>
+          </div>
+        </div>
+        <Link to="/admin/settings" className={styles.qrShortcutBtn}>
+          Manage
+        </Link>
       </div>
     </div>
   );

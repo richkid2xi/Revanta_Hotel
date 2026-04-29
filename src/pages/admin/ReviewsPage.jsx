@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getReviews, updateReview as storeUpdateReview } from '../../store/reviewsStore';
 import styles from './ReviewsPage.module.css';
 
@@ -10,6 +11,14 @@ function ReviewsPage() {
   const [sortBy, setSortBy] = useState('date');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReview, setSelectedReview] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openReviewId) {
+      const rev = reviewsData.find(r => r.id === location.state.openReviewId);
+      if (rev) setSelectedReview(rev);
+    }
+  }, [location.state, reviewsData]);
 
   const handleUpdateReview = (id, updates) => {
     const updated = storeUpdateReview(id, updates);
@@ -65,7 +74,7 @@ function ReviewsPage() {
         <div className={styles.headerRow}>
           <div className={styles.titleContainer}>
             <h1 className={styles.pageTitle}>All Reviews</h1>
-            <p className={styles.pageSubtitle}>{counts.all} submissions total</p>
+            <p className={styles.pageSubtitle}>{counts.all} reviews total</p>
           </div>
           <div className={styles.headerActions}>
             <button 

@@ -94,12 +94,9 @@ export function ReviewSidebar({ review, onClose, onUpdate }) {
 
           {/* Review Responses */}
           <div>
-            <div className={styles.sectionTitle}>Review Responses</div>
+            <div className={styles.sectionTitle}>Main Experience Ratings</div>
             {review.questions?.map((q, idx) => (
               <div key={idx} className={styles.qItem}>
-                <div className={styles.qIconBox}>
-                  <span className="material-icons-outlined">{q.icon}</span>
-                </div>
                 <div className={styles.qContent}>
                   <div className={styles.qHeader}>{q.label}</div>
                   <div className={styles.qText}>{q.text}</div>
@@ -121,14 +118,24 @@ export function ReviewSidebar({ review, onClose, onUpdate }) {
             ))}
           </div>
 
-          {/* Purpose of visit */}
+          {/* Services Used */}
           <div>
-            <div className={styles.sectionTitle}>Purpose of Visit</div>
-            <div className={styles.genericBox}>
-              <span className="material-icons-outlined">favorite_border</span>
-              <p>{review.purpose}</p>
+            <div className={styles.sectionTitle}>Services Used</div>
+            <div className={styles.pillsContainer}>
+              {review.servicesSelected?.map(service => (
+                <span 
+                  key={service} 
+                  className={styles.pill} 
+                  data-service={service}
+                >
+                  {service}
+                </span>
+              ))}
+              {!review.servicesSelected && <p className={styles.emptyText}>{review.purpose}</p>}
             </div>
           </div>
+
+
 
           {/* Additional Comments */}
           <div>
@@ -166,7 +173,7 @@ export function ReviewSidebar({ review, onClose, onUpdate }) {
 
           {/* Internal Notes */}
           <div>
-            <div className={styles.sectionTitle}>Internal Notes (Office Only)</div>
+            <div className={styles.sectionTitle}>Internal Notes (Hotel Only)</div>
             <div className={styles.notesContainer}>
               <textarea 
                 className={styles.notesInput} 

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCodeLib from 'qrcode';
 import { useTheme } from '../../context/ThemeContext';
+import { getHotelSettings, updateHotelSettings } from '../../store/reviewsStore';
 import styles from './SettingsPage.module.css';
 
 function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  const [officeName, setOfficeName] = useState("Volta Regional Minister's Office");
+  const [officeName, setOfficeName] = useState(() => getHotelSettings().name);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
   const canvasRef = useRef(null);
 
   const feedbackUrl = `${window.location.origin}/review`;
@@ -37,13 +39,53 @@ function SettingsPage() {
     });
   };
 
+  const handlePrintQr = () => {
+    if (!canvasRef.current) return;
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) return; // Pop-up blocked
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Feedback QR Code</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 40px; color: #1f2937; }
+            h1 { font-size: 28px; margin-bottom: 8px; color: #111827; }
+            p { font-size: 16px; color: #4b5563; margin-bottom: 40px; }
+            .qr-container { display: flex; justify-content: center; margin-bottom: 40px; }
+            img { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+            .footer { font-weight: 600; color: #0D9488; }
+          </style>
+        </head>
+        <body>
+          <h1>We Value Your Feedback!</h1>
+          <p>Please scan the QR code below using your smartphone camera to share your experience with us.</p>
+          <div class="qr-container">
+            <img src="${canvasRef.current.toDataURL()}" alt="QR Code" width="250" height="250" />
+          </div>
+          <p class="footer">Thank you for choosing ${officeName || 'us'}!</p>
+          <script>
+            window.onload = () => { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleSaveOffice = () => {
+    updateHotelSettings({ name: officeName });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
   return (
     <div className={styles.page}>
       {/* Page Header */}
       <div className={styles.headerRow}>
         <div className={styles.titleContainer}>
           <h1 className={styles.pageTitle}>Settings</h1>
-          <p className={styles.pageSubtitle}>Office configuration and system preferences.</p>
+          <p className={styles.pageSubtitle}>Manage your account, feedback link, and appearance.</p>
         </div>
       </div>
 
@@ -51,7 +93,7 @@ function SettingsPage() {
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Office Details</h2>
         <div className={styles.formGroup}>
-          <label className={styles.label}>OFFICE NAME</label>
+          <label className={styles.label}>BUSINESS / OFFICE NAME</label>
           <input
             type="text"
             className={styles.input}
@@ -60,9 +102,11 @@ function SettingsPage() {
           />
         </div>
         <div className={styles.cardFooter}>
-          <button className={styles.btnPrimary}>
-            <span className="material-icons-outlined" style={{ fontSize: 16 }}>save</span>
-            Save Changes
+          <button className={styles.btnPrimary} onClick={handleSaveOffice}>
+            <span className="material-icons-outlined" style={{ fontSize: 16 }}>
+              {saved ? 'check' : 'save'}
+            </span>
+            {saved ? 'Saved!' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -97,12 +141,12 @@ function SettingsPage() {
               <span className="material-icons-outlined" style={{ fontSize: 16 }}>refresh</span>
               Refresh
             </button>
-            <button className={styles.btnSecondary}>
+            <button className={styles.btnSecondary} onClick={handlePrintQr}>
               <span className="material-icons-outlined" style={{ fontSize: 16 }}>print</span>
               Print A5 Card
             </button>
           </div>
-          <p className={styles.qrFooterText}>A5 card uses Ghana government styling — suitable for display at service points.</p>
+          <p className={styles.qrFooterText}>Print and display at your service point so guests can scan and leave feedback.</p>
         </div>
       </div>
 
@@ -171,15 +215,23 @@ function SettingsPage() {
           </div>
           <div className={styles.infoRow}>
             <span className={styles.infoLabel}>Developer</span>
-            <span className={styles.infoValueText}>EliTech Creatives</span>
+            <a 
+              href="https://elitron-portfolio.vercel.app/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className={styles.infoValueText}
+              style={{ color: 'var(--color-primary-light)', textDecoration: 'none', fontWeight: 600 }}
+            >
+              EliTech CreaTives
+            </a>
           </div>
           <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Office</span>
-            <span className={styles.infoValueText}>Volta Regional Minister&apos;s Office</span>
+            <span className={styles.infoLabel}>Type</span>
+            <span className={styles.infoValueText}>Guest Feedback System</span>
           </div>
           <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>Region</span>
-            <span className={styles.infoValueText}>Volta Region, Ghana</span>
+            <span className={styles.infoLabel}>Country</span>
+            <span className={styles.infoValueText}>Ghana</span>
           </div>
         </div>
       </div>

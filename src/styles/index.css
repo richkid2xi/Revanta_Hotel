@@ -5,20 +5,25 @@
 
 /* ── Invariant Brand Tokens ─────────────────────────────── */
 :root {
-  --color-primary:        #1B5E20;
-  --color-primary-light:  #2E7D32;
-  --color-primary-lighter:#4CAF50;
-  --color-primary-soft:   #E8F5E9;
+  --color-primary:        #0D9488;
+  --color-primary-dark:   #0F766E;
+  --color-primary-bg:     #F0FAFA;
+  --color-primary-border: #99F6E4;
+  --color-primary-light:  #14B8A6;
+  --color-primary-lighter:#2DD4BF;
+  
+  --color-badge-bg:       #CCFBF1;
+  --color-badge-text:     #0D9488;
 
-  --color-accent:         #F9A825;
-  --color-accent-light:   #FDD835;
-  --color-accent-dark:    #F57F17;
+  --color-accent:         #F59E0B; /* Amber star rating */
+  --color-accent-light:   #FBBF24;
+  --color-accent-dark:    #D97706;
 
   --color-danger:         #C62828;
   --color-danger-soft:    #FFEBEE;
   --color-warning:        #E65100;
   --color-warning-soft:   #FBE9E7;
-  --color-success:        #2E7D32;
+  --color-success:        var(--color-primary-dark);
   --color-success-soft:   #E8F5E9;
   --color-info:           #01579B;
   --color-info-soft:      #E1F5FE;
@@ -39,6 +44,17 @@
   --sidebar-width:       260px;
   --topbar-height:       68px;
   --container-max-width: 1280px;
+
+  /* Auth Layout Variable Maps */
+  --card-bg: var(--color-surface);
+  --border-color: var(--color-border);
+  --primary-color: var(--color-primary);
+  --primary-hover: var(--color-primary-dark);
+  --text-main: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --input-bg: var(--color-input-bg);
+  --input-border: var(--color-input-border);
+  --focus-ring: var(--color-primary-border);
 }
 
 /* ── Dark Theme (default) ───────────────────────────────── */
@@ -63,7 +79,7 @@
 
   --color-input-bg:        #191C28;
   --color-input-border:    #222538;
-  --color-input-focus:     #2E7D32;
+  --color-input-focus:     #0D9488;
   --color-placeholder:     #4E5575;
 
   --color-sidebar-bg:      #0A1310;
@@ -93,10 +109,10 @@
 
   --color-input-bg:        #FFFFFF;
   --color-input-border:    #D1D9E0;
-  --color-input-focus:     #2E7D32;
+  --color-input-focus:     #0D9488;
   --color-placeholder:     #9EB3BF;
 
-  --color-sidebar-bg:      #1B5E20;
+  --color-sidebar-bg:      #0D9488;
   --color-sidebar-text:    rgba(255,255,255,.80);
   --color-sidebar-border:  rgba(255,255,255,.10);
 }
@@ -188,3 +204,28 @@ ul, ol {
 ::-webkit-scrollbar-track         { background: transparent; }
 ::-webkit-scrollbar-thumb         { background: var(--color-border); border-radius: var(--radius-full); }
 ::-webkit-scrollbar-thumb:hover   { background: var(--color-text-muted); }
+
+/* ── Auth Theme Toggle ──────────────────────────────────── */
+.auth-theme-toggle {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.auth-theme-toggle:hover {
+  background-color: var(--color-input-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}

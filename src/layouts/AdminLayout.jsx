@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { getHotelSettings } from '../store/reviewsStore';
 import styles from './AdminLayout.module.css';
 
 const NAV_ITEMS = [
@@ -13,10 +14,23 @@ const NAV_ITEMS = [
 function AdminLayout() {
   // Desktop collapse state (icons-only mode)
   const [collapsed, setCollapsed] = useState(false);
-  // Mobile overlay open state
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hotelName, setHotelName] = useState(() => getHotelSettings().name);
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleSettingsUpdate = () => setHotelName(getHotelSettings().name);
+    window.addEventListener('revanta_settings_updated', handleSettingsUpdate);
+    return () => window.removeEventListener('revanta_settings_updated', handleSettingsUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = () => setDropdownOpen(false);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   function handleSignOut() {
     navigate('/admin/login');
@@ -52,14 +66,14 @@ function AdminLayout() {
         {/* Brand */}
         <div className={styles.brand}>
           <div className={styles.brandIcon}>
-            <span className="material-icons-round" style={{ fontSize: 20, color: '#4CAF50' }}>
-              grid_view
+            <span className="material-icons-round" style={{ fontSize: 20, color: '#0D9488' }}>
+              hotel
             </span>
           </div>
           {!collapsed && (
             <div className={styles.brandText}>
               <span className={styles.brandTitle}>Revanta</span>
-              <span className={styles.brandSub}>Minister's Office</span>
+              <span className={styles.brandSub}>{hotelName}</span>
             </div>
           )}
         </div>
@@ -133,13 +147,45 @@ function AdminLayout() {
           </button>
 
           {/* User info */}
-          <div className={styles.topbarUser}>
+          <div 
+            className={styles.topbarUser} 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              setDropdownOpen((o) => !o); 
+            }}
+          >
             <div className={styles.userAvatar}>
-              <span className="material-icons-round" style={{ fontSize: 20, color: '#4CAF50' }}>
+              <span className="material-icons-round" style={{ fontSize: 20, color: '#0D9488' }}>
                 account_circle
               </span>
             </div>
-            <span className={styles.userName}>Min. Volta Office</span>
+            <span className={styles.userName}>{hotelName}</span>
+            <span className="material-icons-outlined" style={{ fontSize: 16, color: 'var(--color-text-muted)' }}>
+              expand_more
+            </span>
+
+            {dropdownOpen && (
+              <div className={styles.dropdownMenu}>
+                <div className={styles.dropdownHeader}>
+                  <div className={styles.dropdownName}>{hotelName}</div>
+                  <div className={styles.dropdownRole}>Administrator</div>
+                </div>
+                <div className={styles.dropdownDivider} />
+                <button className={styles.dropdownItem} onClick={() => navigate('/admin/settings')}>
+                  <span className="material-icons-outlined">settings</span>
+                  Settings
+                </button>
+                <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); toggleTheme(); }}>
+                  <span className="material-icons-outlined">{theme === 'dark' ? 'wb_sunny' : 'dark_mode'}</span>
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </button>
+                <div className={styles.dropdownDivider} />
+                <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={handleSignOut}>
+                  <span className="material-icons-outlined">logout</span>
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

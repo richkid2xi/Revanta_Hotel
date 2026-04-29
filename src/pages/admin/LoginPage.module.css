@@ -39,11 +39,11 @@
 /* ── Card ──────────────────────────────────────────────── */
 .card {
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 40px 36px 32px;
+  padding: 32px 32px 24px;
   box-shadow: var(--shadow-lg);
   transition:
     background var(--transition-normal),
@@ -54,51 +54,75 @@
 /* ── Header ────────────────────────────────────────────── */
 .header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .brand {
   font-family: var(--font-heading);
-  font-size: 1.9rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
-  margin-bottom: 6px;
 }
 
 .office {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: var(--color-text-secondary);
-  font-weight: 400;
-  margin-bottom: 4px;
+  font-weight: 500;
+  margin-bottom: 2px;
 }
 
 .system {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-primary-lighter);
+  color: var(--color-primary);
+  opacity: 0.8;
 }
 
 /* ── Form ──────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* ── Field ─────────────────────────────────────────────── */
 .field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--color-text-secondary);
+}
+
+.inlineForgotBtn {
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  opacity: 0.8;
+  transition: opacity var(--transition-fast);
+}
+
+.inlineForgotBtn:hover {
+  opacity: 1;
 }
 
 /* ── Input wrapper ─────────────────────────────────────── */
@@ -119,12 +143,12 @@
 
 .input {
   width: 100%;
-  padding: 12px 14px 12px 44px;
+  padding: 10px 14px 10px 40px;
   background: var(--color-input-bg);
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   outline: none;
   transition:
     border-color var(--transition-fast),
@@ -137,23 +161,23 @@
 }
 
 .input:focus {
-  border-color: var(--color-input-focus);
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .input:focus + .inputIcon,
 .inputWrapper:focus-within .inputIcon {
-  color: var(--color-primary-lighter);
+  color: var(--color-primary);
 }
 
 /* Password eye button */
 .inputWithEndIcon {
-  padding-right: 44px;
+  padding-right: 40px;
 }
 
 .eyeBtn {
   position: absolute;
-  right: 12px;
+  right: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,20 +196,19 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 14px;
-  background: rgba(198, 40, 40, 0.12);
-  border: 1px solid rgba(198, 40, 40, 0.30);
+  padding: 8px 12px;
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.2);
   border-radius: var(--radius-md);
   color: #EF5350;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   animation: errorSlide 0.2s ease;
 }
 
-/* Wrong credentials — amber tone */
 .errorInvalid {
-  background: rgba(230, 81, 0, 0.12);
-  border-color: rgba(230, 81, 0, 0.30);
+  background: rgba(230, 81, 0, 0.08);
+  border-color: rgba(230, 81, 0, 0.2);
   color: #FF7043;
 }
 
@@ -201,10 +224,10 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 13px 24px;
-  background: var(--color-primary-light);
+  padding: 12px 24px;
+  background: var(--color-primary);
   color: #fff;
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   font-weight: 600;
   border-radius: var(--radius-md);
   transition:
@@ -215,7 +238,7 @@
 }
 
 .signInBtn:hover:not(:disabled) {
-  background: var(--color-primary-lighter);
+  background: var(--color-primary-light);
   transform: translateY(-1px);
 }
 
@@ -230,8 +253,8 @@
 
 /* Loading spinner */
 .spinner {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border: 2px solid rgba(255,255,255,.3);
   border-top-color: #fff;
   border-radius: var(--radius-full);
@@ -243,91 +266,84 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Forgot password ───────────────────────────────────── */
-.forgotBtn {
+/* ── Signup Prompt ──────────────────────────────────────── */
+.signupPrompt {
+  margin-top: 20px;
   text-align: center;
   font-size: 0.85rem;
-  color: var(--color-text-muted);
-  padding: 2px;
-  transition: color var(--transition-fast);
+  color: var(--color-text-secondary);
 }
 
-.forgotBtn:hover {
-  color: var(--color-text-secondary);
+.signupLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.signupLink:hover {
+  text-decoration: underline;
 }
 
 /* ── Demo Account Box ──────────────────────────────────── */
 .demoBox {
   margin-top: 24px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  transition:
-    background var(--transition-normal),
-    border-color var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .demoLabel {
-  display: block;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--color-primary-lighter);
-  margin-bottom: 10px;
+  color: var(--color-text-muted);
 }
 
 .demoCredentials {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-}
-
-.demoCreds {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  gap: 8px;
 }
 
 .demoCode {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--color-text-primary);
-  letter-spacing: 0.01em;
+  background: var(--color-bg);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  flex: 1;
+  text-align: center;
 }
 
 .useThisBtn {
-  flex-shrink: 0;
-  padding: 7px 16px;
-  background: var(--color-primary-light);
-  color: #fff;
-  font-size: 0.8rem;
+  padding: 4px 12px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
   font-weight: 600;
   border-radius: var(--radius-full);
-  transition:
-    background var(--transition-fast),
-    transform var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .useThisBtn:hover {
-  background: var(--color-primary-lighter);
-  transform: translateY(-1px);
-}
-
-.useThisBtn:active {
-  transform: translateY(0);
-}
-
-/* ── Responsive ────────────────────────────────────────── */
-@media (max-width: 520px) {
-  .card {
-    padding: 32px 24px 28px;
-  }
-
-  .brand {
-    font-size: 1.6rem;
-  }
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }

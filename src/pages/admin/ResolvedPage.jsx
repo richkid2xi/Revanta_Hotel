@@ -65,8 +65,8 @@ function ResolvedPage() {
       {/* Header */}
       <div className={styles.headerRow}>
         <div className={styles.titleContainer}>
-          <h1 className={styles.pageTitle}>Resolved Feedback</h1>
-          <p className={styles.pageSubtitle}>{reviewsData.length} resolved submissions</p>
+          <h1 className={styles.pageTitle}>Resolved Reviews</h1>
+          <p className={styles.pageSubtitle}>{reviewsData.length} resolved reviews</p>
         </div>
         <div className={styles.headerActions}>
           <button 
@@ -83,27 +83,7 @@ function ResolvedPage() {
         </div>
       </div>
 
-      {/* Controls Row: Date Filters */}
-      <div className={styles.controlsRow}>
-        <div className={styles.dateFilterGroup}>
-          <span className={styles.dateLabel}>FROM</span>
-          <input 
-            type="date" 
-            className={styles.dateInput} 
-            value={fromDate}
-            onChange={e => setFromDate(e.target.value)}
-          />
-        </div>
-        <div className={styles.dateFilterGroup}>
-          <span className={styles.dateLabel}>TO</span>
-          <input 
-            type="date" 
-            className={styles.dateInput} 
-            value={toDate}
-            onChange={e => setToDate(e.target.value)}
-          />
-        </div>
-      </div>
+
 
       {/* Search */}
       <div className={styles.searchContainer}>
@@ -111,7 +91,7 @@ function ResolvedPage() {
         <input 
           type="text" 
           className={styles.searchInput} 
-          placeholder="Search resolved feedback..." 
+          placeholder="Search resolved reviews..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -120,7 +100,7 @@ function ResolvedPage() {
       {/* List */}
       <div className={styles.reviewsList}>
         {filteredAndSorted.length === 0 ? (
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: 10 }}>No resolved feedback matches your filters.</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: 10 }}>No resolved reviews match your filters.</p>
         ) : (
           filteredAndSorted.map((review) => (
             <div 
@@ -130,10 +110,7 @@ function ResolvedPage() {
               style={{ cursor: 'pointer' }}
             >
               
-              <div className={styles.resolvedDateBox}>
-                <span className="material-icons-outlined" style={{ fontSize: 16 }}>check_circle</span>
-                {review.resolvedDateStr}
-              </div>
+
 
               <div className={styles.cardHeader}>
                 <span className={styles.refId}>{review.id}</span>

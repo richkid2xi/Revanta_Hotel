@@ -1,6 +1,6 @@
-# Regional Feedback & Monitoring System 🏛️
+# Revanta · Guest Feedback & Review System 🏨
 
-A sophisticated, multi-platform feedback ecosystem designed for the Volta Regional Minister's office to streamline citizen engagement and service monitoring.
+A sophisticated, multi-platform feedback ecosystem developed by **EliTech CreaTives** to streamline customer engagement, service monitoring, and reputation management for modern hospitality and service businesses.
 
 ---
 
@@ -8,17 +8,17 @@ A sophisticated, multi-platform feedback ecosystem designed for the Volta Region
 > ### 🛑 PROPRIETARY & PRIVATE
 > Although this repository is hosted on a public platform for development tracking, the project is **strictly private**. 
 > 
-> **Reproduction, distribution, or copying of any part of this codebase, design system, or logic is strictly prohibited without explicit written permission from the owner.**
+> **Reproduction, distribution, or copying of any part of this codebase, design system, or logic is strictly prohibited without explicit written permission from EliTech CreaTives.**
 
 ---
 
 ## 🌟 Key Features
 
-- **📊 Comprehensive Admin Dashboard**: Real-time visualization of citizen feedback and service ratings.
-- **📝 Multi-Step Feedback Form**: Interactive, user-friendly interface for citizens to submit reviews and suggestions.
-- **📱 QR Code Ecosystem**: Automated generation and tracking of service-specific QR codes for easy access.
-- **✅ Resolution Tracking**: Dedicated workflow for managing and resolving citizen concerns.
-- **🎨 Premium UI/UX**: Custom-built design system with fluid animations and responsive layouts.
+- **📊 Comprehensive Admin Dashboard**: Real-time visualization of guest feedback, satisfaction scores, and service ratings.
+- **📝 Multi-Step Feedback Form**: Interactive, user-friendly interface for guests to submit detailed reviews and suggestions.
+- **📱 QR Code Ecosystem**: Automated generation and tracking of service-specific QR codes for easy physical-to-digital access.
+- **✅ Resolution Tracking**: Dedicated workflow for managing, responding to, and resolving guest concerns.
+- **🎨 Premium UI/UX**: Custom-built design system with fluid animations, dark mode support, and responsive layouts.
 
 ## 🛠️ Technology Stack
 
@@ -27,7 +27,7 @@ A sophisticated, multi-platform feedback ecosystem designed for the Volta Region
 - **Routing**: [React Router 7](https://reactrouter.com/)
 - **Styling**: Vanilla CSS (Modular & Design Tokens)
 - **State Management**: React Context & Custom Hooks
-- **Icons**: Custom SVG Icon System
+- **Icons**: Material Icons (Round & Outlined)
 
 ## 🚀 Getting Started
 
@@ -64,4 +64,4 @@ src/
 
 ---
 
-*Copyright © 2026. All rights reserved.*
+*Copyright © 2026 EliTech CreaTives. All rights reserved.*

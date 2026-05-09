@@ -84,10 +84,11 @@ export const generateMockReviews = () => {
       author: isAnon ? null : authors[i % authors.length],
       questions: [
         { label: 'Q1 · OVERALL SATISFACTION', text: 'Overall, how satisfied are you with your experience?', score: rating },
-        { label: 'Q2 · STAFF ATTITUDE & PROFESSIONALISM', text: 'How would you rate the attitude and professionalism of our staff?', score: Math.min(5, rating + 1) },
-        { label: 'Q3 · CLEANLINESS', text: 'How would you rate the cleanliness of our facilities?', score: Math.max(1, rating - 1) },
-        { label: 'Q4 · VALUE FOR MONEY', text: 'How would you rate the value for money?', score: rating },
-        { label: 'Q5 · OVERALL EXPERIENCE', text: 'How smooth was your overall experience with us?', score: Math.min(5, rating + 1) }
+        { label: 'Q2 · CHECK-IN & CHECK-OUT', text: 'How would you rate the smoothness of your check-in and check-out process?', score: rating },
+        { label: 'Q3 · STAFF ATTITUDE & PROFESSIONALISM', text: 'How would you rate the attitude and professionalism of our staff?', score: Math.min(5, rating + 1) },
+        { label: 'Q4 · CLEANLINESS', text: 'How would you rate the cleanliness of our facilities?', score: Math.max(1, rating - 1) },
+        { label: 'Q5 · VALUE FOR MONEY', text: 'How would you rate the value for money?', score: rating },
+        { label: 'Q6 · OVERALL EXPERIENCE', text: 'How smooth was your overall experience with us?', score: Math.min(5, rating + 1) }
       ],
       servicesSelected: i % 2 === 0 ? ['Room Stay', 'Events or Banquet'] : ['Room Stay', 'Pool or Gym'],
       purpose: i % 2 === 0 ? "Business Trip" : "Family Vacation",

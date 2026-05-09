@@ -16,10 +16,11 @@ const ALL_SERVICES = [
 
 const MAIN_QUESTIONS = [
   { id: 'q1', label: 'OVERALL SATISFACTION',          text: 'Overall, how satisfied are you with your experience?' },
-  { id: 'q2', label: 'STAFF ATTITUDE & PROFESSIONALISM', text: 'How would you rate the attitude and professionalism of our staff?' },
-  { id: 'q3', label: 'CLEANLINESS',                   text: 'How would you rate the cleanliness of our facilities?' },
-  { id: 'q4', label: 'VALUE FOR MONEY',                text: 'How would you rate the value for money?' },
-  { id: 'q5', label: 'OVERALL EXPERIENCE',            text: 'How smooth was your overall experience with us?' },
+  { id: 'q2', label: 'CHECK-IN & CHECK-OUT',          text: 'How would you rate the smoothness of your check-in and check-out process?' },
+  { id: 'q3', label: 'STAFF ATTITUDE & PROFESSIONALISM', text: 'How would you rate the attitude and professionalism of our staff?' },
+  { id: 'q4', label: 'CLEANLINESS',                   text: 'How would you rate the cleanliness of our facilities?' },
+  { id: 'q5', label: 'VALUE FOR MONEY',                text: 'How would you rate the value for money?' },
+  { id: 'q6', label: 'OVERALL EXPERIENCE',            text: 'How smooth was your overall experience with us?' },
 ];
 
 const RATING_OPTIONS = [
@@ -134,7 +135,7 @@ function ReviewPage() {
           <div className={styles.topProgressText}>
             <span>
               {currentStepData.type === 'serviceSelection' && 'Experience'}
-              {currentStepData.type === 'mainQ'            && `General Survey ${currentStepData.index}/5`}
+              {currentStepData.type === 'mainQ'            && `General Survey ${currentStepData.index}/${MAIN_QUESTIONS.length}`}
               {currentStepData.type === 'comment'          && 'Final Feedback'}
               {currentStepData.type === 'contact'          && 'Contact Info'}
               {currentStepData.type === 'summary'          && 'Review'}

@@ -126,7 +126,7 @@ export function ReviewSidebar({ review, onClose, onUpdate }) {
                 <span 
                   key={service} 
                   className={styles.pill} 
-                  data-service={service}
+                  data-service={service.startsWith('Other:') ? 'Other' : service}
                 >
                   {service}
                 </span>

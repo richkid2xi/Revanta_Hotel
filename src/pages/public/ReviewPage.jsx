@@ -56,6 +56,7 @@ function ReviewPage() {
   const [comment, setComment] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [contact, setContact] = useState({ name: '', phone: '', email: '' });
+  const [otherServiceText, setOtherServiceText] = useState('');
   const [showValidationError, setShowValidationError] = useState(false);
 
   const [refNumber] = useState(generateRefNumber);
@@ -112,7 +113,7 @@ function ReviewPage() {
       rating:          mainRatings['q1'] || 0,
       status:          'unread',
       isAnonymous,
-      servicesSelected: selectedServices,
+      servicesSelected: selectedServices.map(s => s === 'Other' && otherServiceText.trim() ? `Other: ${otherServiceText.trim()}` : s),
       text:            comment.trim() || 'No additional comments.',
       author:          isAnonymous ? null : { ...contact },
       questions:       MAIN_QUESTIONS.map((q) => ({ label: q.label, text: q.text, score: mainRatings[q.id] })),
@@ -221,6 +222,18 @@ function ReviewPage() {
                 );
               })}
             </div>
+
+            {selectedServices.includes('Other') && (
+              <div className={styles.otherInputWrapper}>
+                <input
+                  type="text"
+                  className={styles.otherInput}
+                  placeholder="Please specify other services..."
+                  value={otherServiceText}
+                  onChange={(e) => setOtherServiceText(e.target.value)}
+                />
+              </div>
+            )}
 
             {showValidationError && (
               <p className={styles.validationText}>Please select at least one option to continue.</p>
@@ -408,7 +421,9 @@ function ReviewPage() {
                 <label>SERVICES USED</label>
                 <div className={styles.pillsRow}>
                   {selectedServices.map((s) => (
-                    <span key={s} className={styles.pill}>{s}</span>
+                    <span key={s} className={styles.pill}>
+                      {s === 'Other' && otherServiceText.trim() ? `Other: ${otherServiceText.trim()}` : s}
+                    </span>
                   ))}
                 </div>
               </div>

@@ -430,6 +430,39 @@
   margin-top: 12px;
 }
 
+.otherInputWrapper {
+  margin-top: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.otherInput {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  color: #0F172A;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme='dark'] .otherInput {
+  background-color: #1C2333;
+  border-color: #30363D;
+  color: #E6EDF3;
+}
+
+.otherInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: #F8FFFE;
+}
+
+[data-theme='dark'] .otherInput:focus {
+  background-color: #0D2B28;
+}
+
 @media (max-width: 768px) {
   .serviceGrid {
     grid-template-columns: repeat(2, 1fr);

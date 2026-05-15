@@ -364,9 +364,10 @@ router.get('/get-hotel-by-token', async (req, res) => {
       return res.status(404).json({ error: 'Invalid review token' });
     }
 
-    const defaultServices = ['room', 'restaurant', 'conference', 'other'];
-    const enabledServices = branch.hotel.enabledServices.length > 0 
-      ? branch.hotel.enabledServices.map(s => s.serviceKey)
+    const enabledServicesRecords = branch.hotel.enabledServices.filter(s => s.isEnabled);
+    const defaultServices = ['room', 'restaurant', 'conference', 'pool_gym', 'other'];
+    const enabledServices = enabledServicesRecords.length > 0 
+      ? enabledServicesRecords.map(s => s.serviceKey)
       : defaultServices;
 
     res.json({

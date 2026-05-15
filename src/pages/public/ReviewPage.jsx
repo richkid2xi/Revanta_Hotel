@@ -54,10 +54,16 @@ function ReviewPage() {
 
   // Active services (filtered by hotel settings)
   const SERVICES = useMemo(() => {
-    return enabledServicesKeys.map(key => ({
+    // If we have specific services enabled for this hotel, use them.
+    // Otherwise, fall back to a sensible default list.
+    const keys = enabledServicesKeys.length > 0 
+      ? enabledServicesKeys 
+      : ['room', 'restaurant', 'pool_gym', 'other'];
+      
+    return keys.map(key => ({
       id: key,
       ...ALL_SERVICES_MAP[key]
-    })).filter(s => s.label); // Filter out any unknown keys
+    })).filter(s => s && s.label); 
   }, [enabledServicesKeys]);
 
   // Form state

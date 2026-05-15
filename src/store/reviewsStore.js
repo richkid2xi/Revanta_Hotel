@@ -28,13 +28,24 @@ const formatReview = (r) => {
     rawDate: rawDate.getTime(),
     date: `${dayName}, ${day} ${month} ${year} at ${hours}:${minutes}`,
     shortDate: `${day} ${month.slice(0, 3)} ${year}, ${hours}:${minutes}`,
-    text: r.writtenComment || r.text,
+    text: r.writtenComment || r.text || 'No comment provided.',
     author: author,
-    questions: r.generalScores ? Object.entries(r.generalScores).map(([key, val]) => ({
-      label: key.toUpperCase(),
-      text: key,
-      score: val
-    })) : []
+    questions: r.generalScores ? Object.entries(r.generalScores).map(([key, val]) => {
+      // Map q1, q2 etc back to human readable labels if possible
+      const labelMap = {
+        'q1': 'Overall Satisfaction',
+        'q2': 'Check-in & Check-out',
+        'q3': 'Staff Attitude',
+        'q4': 'Cleanliness',
+        'q5': 'Value for Money',
+        'q6': 'Overall Experience'
+      };
+      return {
+        label: labelMap[key] || key.toUpperCase(),
+        text: key,
+        score: val
+      };
+    }) : []
   };
 };
 

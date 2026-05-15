@@ -21,7 +21,10 @@ function SettingsPage() {
   const [loadingSub, setLoadingSub] = useState(true);
   
   const canvasRef = useRef(null);
-  const feedbackUrl = `${window.location.origin}/review`;
+  const branchToken = localStorage.getItem('revanta_active_branch_token');
+  const feedbackUrl = branchToken 
+    ? `${window.location.origin}/r/${branchToken}` 
+    : `${window.location.origin}/review`;
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -242,13 +245,14 @@ function SettingsPage() {
               value={feedbackUrl}
               readOnly
             />
-            <button className={styles.btnSecondary} onClick={handleCopy}>
+            <button className={styles.btnSecondary} onClick={handleCopy} disabled={!branchToken}>
               <span className="material-icons-outlined" style={{ fontSize: 16 }}>
                 {copied ? 'check' : 'content_copy'}
               </span>
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
+          {!branchToken && <p style={{ color: '#EF4444', fontSize: '0.8rem', marginTop: '8px' }}>Warning: No branch token found. Please re-login to fix this.</p>}
         </div>
 
         <div className={styles.qrSection}>

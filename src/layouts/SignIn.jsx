@@ -36,6 +36,11 @@ export default function SignIn() {
       localStorage.setItem('revanta_session_hotel_id', result.hotel.id);
       localStorage.setItem('revanta_active_hotel_name', result.hotel.name);
       
+      // Store the first branch's token for QR code generation
+      if (result.hotel.branches && result.hotel.branches.length > 0) {
+        localStorage.setItem('revanta_active_branch_token', result.hotel.branches[0].reviewToken);
+      }
+      
       navigate('/admin/overview');
     } catch (err) {
       setError('Invalid email or password. Please try again.');

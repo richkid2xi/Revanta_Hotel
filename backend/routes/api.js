@@ -395,6 +395,23 @@ router.post('/submit-review', async (req, res) => {
 
     const reference = `REV-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
+    // Basic Spam Prevention: Check for recent review from same email/phone
+    if (guestEmail || guestPhone) {
+      const recent = await prisma.review.findFirst({
+        where: {
+          hotelId,
+          OR: [
+            guestEmail ? { guestEmail } : null,
+            guestPhone ? { guestPhone } : null
+          ].filter(Boolean),
+          createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) } // 1 hour window
+        }
+      });
+      if (recent) {
+        return res.status(429).json({ error: 'You have already submitted a review recently. Please try again later.' });
+      }
+    }
+
     const review = await prisma.review.create({
       data: {
         hotelId,

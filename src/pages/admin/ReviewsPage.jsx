@@ -33,6 +33,13 @@ function ReviewsPage() {
 
   useEffect(() => {
     loadReviews();
+
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(() => {
+      loadReviews();
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [location.state]);
 
   const handleUpdateReview = async (id, updates) => {

@@ -76,8 +76,21 @@ function ReviewPage() {
   const [otherServiceText, setOtherServiceText] = useState('');
   const [showValidationError, setShowValidationError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(null);
 
   const [refNumber] = useState(generateRefNumber);
+
+  // --- Spam Prevention Check ---
+  useEffect(() => {
+    const lastSubmission = localStorage.getItem(`revanta_last_sub_${hotelId}`);
+    if (lastSubmission) {
+      const timeSince = Date.now() - parseInt(lastSubmission);
+      const cooldown = 24 * 60 * 60 * 1000; // 24 hours
+      if (timeSince < cooldown) {
+        setCooldownRemaining(Math.ceil((cooldown - timeSince) / (60 * 60 * 1000)));
+      }
+    }
+  }, [hotelId]);
 
   // ─── Dynamic step list ─────────────────────────────────────────────────────
   const dynamicSteps = useMemo(() => {
@@ -139,6 +152,8 @@ function ReviewPage() {
       const result = await submitReview(reviewData);
       
       if (result.success) {
+        // Set cooldown to prevent spamming
+        localStorage.setItem(`revanta_last_sub_${hotelId}`, Date.now().toString());
         navigate('/thank-you', { state: { ref: result.reference, name: isAnonymous ? null : contact.name } });
       }
     } catch (err) {
@@ -149,7 +164,25 @@ function ReviewPage() {
     }
   };
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  if (cooldownRemaining !== null) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.landingContainer} style={{ marginTop: '10vh' }}>
+          <span className="material-icons-round" style={{ fontSize: '64px', color: '#10B981', marginBottom: '24px' }}>check_circle</span>
+          <h2 className={styles.mainTitle}>Feedback Received</h2>
+          <p className={styles.subtitle}>Thank you! You've already submitted a review for {hotelName} recently.</p>
+          <p className={styles.description} style={{ marginTop: '16px' }}>
+            To ensure quality feedback, we limit submissions to once every 24 hours. 
+            You can submit another review in about {cooldownRemaining} hours.
+          </p>
+          <button className={styles.startBtn} style={{ marginTop: '32px' }} onClick={() => navigate('/signin')}>
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
 

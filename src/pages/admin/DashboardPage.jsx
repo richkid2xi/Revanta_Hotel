@@ -93,9 +93,18 @@ function DashboardPage() {
   useEffect(() => {
     loadData();
 
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(() => {
+      loadData(true, true); // Silent refresh
+    }, 60000);
+
     const handleSettingsUpdate = () => setHotelName(getHotelSettings().name);
     window.addEventListener('revanta_settings_updated', handleSettingsUpdate);
-    return () => window.removeEventListener('revanta_settings_updated', handleSettingsUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('revanta_settings_updated', handleSettingsUpdate);
+    };
   }, []);
 
   const stats = useMemo(() => {

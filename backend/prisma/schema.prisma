@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Hotel {
+  id                         String   @id @default(uuid())
+  name                       String
+  type                       String
+  country                    String   @default("Ghana")
+  region                     String
+  city                       String
+  website                    String?
+  logoUrl                    String?  @map("logo_url")
+  ownerName                  String   @map("owner_name")
+  ownerEmail                 String   @unique @map("owner_email")
+  password                   String?
+  ownerPhone                 String   @map("owner_phone")
+  jobTitle                   String?  @map("job_title")
+  plan                       String   @default("starter")
+  subscriptionStatus         String   @default("pending_payment") @map("subscription_status")
+  subscriptionEnd            DateTime? @map("subscription_end")
+  trialEnds                  DateTime? @map("trial_ends")
+  paystackCustomerCode       String?  @map("paystack_customer_code")
+  paystackSubscriptionCode   String?  @map("paystack_subscription_code")
+  isActive                   Boolean  @default(false) @map("is_active")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+  branches                   Branch[]
+  reviews                    Review[]
+  notifications              Notification[]
+  paymentReferences          PaymentReference[]
+  enabledServices            EnabledService[]
+
+  @@map("hotels")
+}
+
+model Branch {
+  id           String   @id @default(uuid())
+  hotelId      String   @map("hotel_id")
+  hotel        Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  name         String
+  location     String
+  reviewToken  String   @unique @default(dbgenerated("encode(gen_random_bytes(8), 'hex')")) @map("review_token")
+  qrUrl        String?  @map("qr_url")
+  totalScans   Int      @default(0) @map("total_scans")
+  totalReviews Int      @default(0) @map("total_reviews")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  reviews      Review[]
+
+  @@map("branches")
+}
+
+model Review {
+  id              String   @id @default(uuid())
+  hotelId         String   @map("hotel_id")
+  hotel           Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  branchId        String   @map("branch_id")
+  branch          Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  referenceNumber String   @unique @map("reference_number")
+  overallRating   Int      @map("overall_rating")
+  selectedServices String[] @default([]) @map("selected_services")
+  generalScores   Json     @default("{}") @map("general_scores")
+  serviceScores   Json     @default("{}") @map("service_scores")
+  writtenComment  String?  @map("written_comment")
+  isAnonymous     Boolean  @default(true) @map("is_anonymous")
+  guestName       String?  @map("guest_name")
+  guestPhone      String?  @map("guest_phone")
+  guestEmail      String?  @map("guest_email")
+  status          String   @default("unread")
+  internalNotes   String?  @map("internal_notes")
+  resolvedAt      DateTime? @map("resolved_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  notifications   Notification[]
+
+  @@map("reviews")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  hotelId   String   @map("hotel_id")
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  reviewId  String?  @map("review_id")
+  review    Review?  @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model PaymentReference {
+  id        String   @id @default(uuid())
+  reference String   @unique
+  hotelId   String   @map("hotel_id")
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  status    String   @default("pending")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("payment_references")
+}
+
+model EnabledService {
+  id         String  @id @default(uuid())
+  hotelId    String  @map("hotel_id")
+  hotel      Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  serviceKey String  @map("service_key")
+  isEnabled  Boolean @default(true) @map("is_enabled")
+
+  @@unique([hotelId, serviceKey])
+  @@map("enabled_services")
+}

@@ -1,18 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addReview, getHotelSettings } from '../../store/reviewsStore';
+import { submitReview } from '../../api';
 import styles from './ReviewPage.module.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ALL_SERVICES = [
-  { id: 'roomStay',    label: 'Room Stay',                  icon: 'hotel' },
-  { id: 'conference',  label: 'Conference or Meeting Room', icon: 'meeting_room' },
-  { id: 'poolOrGym',   label: 'Pool or Gym',                icon: 'pool' },
-  { id: 'spa',         label: 'Spa or Wellness',            icon: 'spa' },
-  { id: 'events',      label: 'Events or Banquet',          icon: 'celebration' },
-  { id: 'other',       label: 'Other',                      icon: 'more_horiz' },
-];
+const ALL_SERVICES_MAP = {
+  'room': { label: 'Room Stay', icon: 'hotel' },
+  'restaurant': { label: 'Restaurant', icon: 'restaurant' },
+  'conference': { label: 'Conference or Meeting Room', icon: 'meeting_room' },
+  'pool_gym': { label: 'Pool or Gym', icon: 'pool' },
+  'spa': { label: 'Spa or Wellness', icon: 'spa' },
+  'events': { label: 'Events or Banquet', icon: 'celebration' },
+  'other': { label: 'Other', icon: 'more_horiz' },
+};
 
 const MAIN_QUESTIONS = [
   { id: 'q1', label: 'OVERALL SATISFACTION',          text: 'Overall, how satisfied are you with your experience?' },
@@ -42,12 +43,22 @@ function generateRefNumber() {
 
 function ReviewPage() {
   const navigate = useNavigate();
-  const settings = useMemo(() => getHotelSettings(), []);
+  
+  // Get data from localStorage (set by ReviewRedirect)
+  const hotelName = localStorage.getItem('revanta_active_hotel_name') || 'Revanta Hotel';
+  const hotelId = localStorage.getItem('revanta_active_hotel_id');
+  const branchName = localStorage.getItem('revanta_active_branch_name') || 'Main Branch';
+  const branchId = localStorage.getItem('revanta_active_branch_id');
+  const logoUrl = localStorage.getItem('revanta_active_logo_url');
+  const enabledServicesKeys = JSON.parse(localStorage.getItem('revanta_active_services') || '[]');
 
   // Active services (filtered by hotel settings)
   const SERVICES = useMemo(() => {
-    return ALL_SERVICES.filter((s) => settings.services[s.id]);
-  }, [settings]);
+    return enabledServicesKeys.map(key => ({
+      id: key,
+      ...ALL_SERVICES_MAP[key]
+    })).filter(s => s.label); // Filter out any unknown keys
+  }, [enabledServicesKeys]);
 
   // Form state
   const [step, setStep] = useState(0);
@@ -58,6 +69,7 @@ function ReviewPage() {
   const [contact, setContact] = useState({ name: '', phone: '', email: '' });
   const [otherServiceText, setOtherServiceText] = useState('');
   const [showValidationError, setShowValidationError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [refNumber] = useState(generateRefNumber);
 
@@ -101,29 +113,34 @@ function ReviewPage() {
     setMainRatings((prev) => ({ ...prev, [id]: val }));
 
   // ─── Submit ─────────────────────────────────────────────────────────────────
-  const handleSubmit = () => {
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const reviewData = {
+        hotelId: hotelId,
+        branchId: branchId,
+        overallRating: mainRatings['q1'] || 0,
+        selectedServices: selectedServices.map(s => s === 'Other' && otherServiceText.trim() ? `Other: ${otherServiceText.trim()}` : s),
+        generalScores: mainRatings,
+        serviceScores: {}, // Expandable in the future
+        writtenComment: comment.trim(),
+        isAnonymous: isAnonymous,
+        guestName: isAnonymous ? null : contact.name,
+        guestPhone: isAnonymous ? null : contact.phone,
+        guestEmail: isAnonymous ? null : contact.email,
+      };
 
-    const reviewData = {
-      id:              refNumber,
-      rawDate:         now.getTime(),
-      date:            `${now.toLocaleString('default', { weekday: 'long' })}, ${pad(now.getDate())} ${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()} at ${pad(now.getHours())}:${pad(now.getMinutes())}`,
-      shortDate:       `${pad(now.getDate())} ${now.toLocaleString('default', { month: 'short' })} ${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}`,
-      rating:          mainRatings['q1'] || 0,
-      status:          'unread',
-      isAnonymous,
-      servicesSelected: selectedServices.map(s => s === 'Other' && otherServiceText.trim() ? `Other: ${otherServiceText.trim()}` : s),
-      text:            comment.trim() || 'No additional comments.',
-      author:          isAnonymous ? null : { ...contact },
-      questions:       MAIN_QUESTIONS.map((q) => ({ label: q.label, text: q.text, score: mainRatings[q.id] })),
-      notes:           '',
-      rawResolvedDate: null,
-      resolvedDateStr: null,
-    };
-
-    addReview(reviewData);
-    navigate('/thank-you', { state: { ref: refNumber, name: isAnonymous ? null : contact.name } });
+      const result = await submitReview(reviewData);
+      
+      if (result.success) {
+        navigate('/thank-you', { state: { ref: result.reference, name: isAnonymous ? null : contact.name } });
+      }
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -153,10 +170,14 @@ function ReviewPage() {
       {currentStepData.type === 'welcome' && (
         <div className={styles.landingContainer}>
           <div className={styles.brandGroup}>
-            <h1 className={styles.mainLogo}>Revanta</h1>
+            {logoUrl ? (
+              <img src={logoUrl} alt={hotelName} className={styles.hotelLogo} style={{ maxHeight: '80px', marginBottom: '20px' }} />
+            ) : (
+              <h1 className={styles.mainLogo}>Revanta</h1>
+            )}
             <div className={styles.officeBadge}>
               <span className="material-icons-round">hotel</span>
-              <span>{settings.name}</span>
+              <span>{hotelName} &bull; {branchName}</span>
             </div>
           </div>
 
@@ -461,9 +482,15 @@ function ReviewPage() {
           </div>
 
           <div className={styles.actionFixed}>
-            <button className={styles.submitBtn} onClick={handleSubmit}>
-              <span className="material-icons-round">send</span>
-              Submit Feedback
+            <button className={styles.submitBtn} onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <div className={styles.loaderSmall} />
+              ) : (
+                <>
+                  <span className="material-icons-round">send</span>
+                  Submit Feedback
+                </>
+              )}
             </button>
           </div>
         </div>

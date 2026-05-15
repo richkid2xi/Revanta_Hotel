@@ -1,23 +1,47 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { login } from '../api';
 import './SignIn.css';
 
 const DEMO_CREDENTIALS = {
-  email: 'demo@revanta.app',
-  password: 'Demo@1234',
+  email: 'richardelikem31@gmail.com',
+  password: '12345678',
 };
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/admin/overview');
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await login({ email, password });
+      
+      // Clear old session data
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('revanta_')) localStorage.removeItem(key);
+      });
+
+      localStorage.setItem('revanta_auth_token', result.token);
+      localStorage.setItem('revanta_session_hotel_id', result.hotel.id);
+      localStorage.setItem('revanta_active_hotel_name', result.hotel.name);
+      
+      navigate('/admin/overview');
+    } catch (err) {
+      setError('Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDemoFill = () => {
@@ -71,6 +95,8 @@ export default function SignIn() {
             </div>
           </div>
 
+          {error && <p style={{ color: '#EF4444', fontSize: '0.85rem', marginTop: '-10px', marginBottom: '10px' }}>{error}</p>}
+
           <div className="form-actions">
             <label className="checkbox-container">
               <input type="checkbox" />
@@ -82,15 +108,15 @@ export default function SignIn() {
             </Link>
           </div>
 
-          <button type="submit" className="btn-primary">
-            Sign In
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
           <button type="button" className="btn-outline" onClick={handleDemoFill}>
             <span className="material-icons-round" style={{ fontSize: 16, verticalAlign: 'middle', marginRight: 6 }}>
               auto_awesome
             </span>
-            Use Demo Account
+            Use Test Account
           </button>
         </form>
 

@@ -12,13 +12,18 @@ const NAV_ITEMS = [
 ];
 
 function AdminLayout() {
-  // Desktop collapse state (icons-only mode)
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hotelName, setHotelName] = useState(() => getHotelSettings().name);
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  // Auth guard
+  useEffect(() => {
+    const token = localStorage.getItem('revanta_auth_token');
+    if (!token) navigate('/signin', { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
     const handleSettingsUpdate = () => setHotelName(getHotelSettings().name);
@@ -33,7 +38,11 @@ function AdminLayout() {
   }, []);
 
   function handleSignOut() {
-    navigate('/admin/login');
+    // Clear all session tokens
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('revanta_')) localStorage.removeItem(key);
+    });
+    navigate('/signin', { replace: true });
   }
 
   function handleToggle() {

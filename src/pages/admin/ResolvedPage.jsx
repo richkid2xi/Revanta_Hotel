@@ -1,151 +1,145 @@
-import React, { useState, useMemo } from 'react';
-import { getReviews, updateReview as storeUpdateReview } from '../../store/reviewsStore';
+import { useState, useEffect } from 'react';
+import { fetchReviews, updateReviewStatus, saveReviewNote } from '../../store/reviewsStore';
 import { ReviewSidebar, StarRating } from '../../components/ReviewSidebar';
+import toast from 'react-hot-toast';
 import styles from './ResolvedPage.module.css';
 
 function ResolvedPage() {
-  const [reviewsData, setReviewsData] = useState(() => {
-    const all = getReviews();
-    return all.filter(r => r.status === 'resolved');
-  });
+  const [reviewsData, setReviewsData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
   const [sortDesc, setSortDesc] = useState(true);
 
-  const handleUpdateReview = (id, updates) => {
-    const updated = storeUpdateReview(id, updates);
-    setReviewsData(updated.filter(r => r.status === 'resolved'));
-    if (selectedReview && selectedReview.id === id) {
-      setSelectedReview({ ...selectedReview, ...updates });
+  useEffect(() => {
+    async function load() {
+      try {
+        const all = await fetchReviews({ status: 'resolved' });
+        setReviewsData(all);
+      } catch (err) {
+        console.error('Failed to load resolved reviews:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const handleUpdateReview = async (id, updates) => {
+    // Optimistic update
+    setReviewsData(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    if (selectedReview?.id === id) {
+      setSelectedReview(prev => ({ ...prev, ...updates }));
+    }
+    // Sync to backend
+    try {
+      if (updates.status) {
+        await updateReviewStatus(id, updates.status);
+        toast.success(`Marked as ${updates.status}`);
+      }
+      if (updates.notes !== undefined) {
+        await saveReviewNote(id, updates.notes);
+        toast.success('Notes saved');
+      }
+    } catch (err) {
+      console.error('Failed to sync update:', err);
+      toast.error('Failed to save changes');
     }
   };
 
-  const filteredAndSorted = useMemo(() => {
-    let result = reviewsData;
-
-    if (searchQuery.trim()) {
+  const filtered = reviewsData
+    .filter(r => {
+      if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
-      result = result.filter(r => 
-        r.text.toLowerCase().includes(q) ||
-        r.id.toLowerCase().includes(q) ||
-        (r.author && r.author.name.toLowerCase().includes(q))
+      return (
+        r.text?.toLowerCase().includes(q) ||
+        r.id?.toLowerCase().includes(q) ||
+        r.author?.name?.toLowerCase().includes(q)
       );
-    }
-
-    if (fromDate) {
-      const fromTime = new Date(fromDate).getTime();
-      if (!isNaN(fromTime)) {
-        result = result.filter(r => r.rawResolvedDate >= fromTime);
-      }
-    }
-    
-    if (toDate) {
-      // Add a full day to include the toDate up to midnight
-      const toTime = new Date(toDate).getTime() + 86400000;
-      if (!isNaN(toTime)) {
-        result = result.filter(r => r.rawResolvedDate <= toTime);
-      }
-    }
-
-    result = [...result].sort((a, b) => {
-      if (sortDesc) {
-        return b.rawResolvedDate - a.rawResolvedDate;
-      } else {
-        return a.rawResolvedDate - b.rawResolvedDate;
-      }
-    });
-
-    return result;
-  }, [reviewsData, searchQuery, fromDate, toDate, sortDesc]);
+    })
+    .sort((a, b) => sortDesc ? b.rawDate - a.rawDate : a.rawDate - b.rawDate);
 
   return (
-    <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.headerRow}>
-        <div className={styles.titleContainer}>
-          <h1 className={styles.pageTitle}>Resolved Reviews</h1>
-          <p className={styles.pageSubtitle}>{reviewsData.length} resolved reviews</p>
+    <>
+      <div className={styles.page}>
+        {/* Header */}
+        <div className={styles.headerRow}>
+          <div className={styles.titleContainer}>
+            <h1 className={styles.pageTitle}>Resolved Reviews</h1>
+            <p className={styles.pageSubtitle}>{reviewsData.length} resolved reviews</p>
+          </div>
+          <div className={styles.headerActions}>
+            <button className={styles.filterBtn} onClick={() => setSortDesc(v => !v)}>
+              <span className="material-icons-outlined" style={{ fontSize: 16 }}>sort</span>
+              Date {sortDesc ? '↓' : '↑'}
+            </button>
+          </div>
         </div>
-        <div className={styles.headerActions}>
-          <button 
-            className={styles.filterBtn}
-            onClick={() => setSortDesc(!sortDesc)}
-          >
-            <span className="material-icons-outlined" style={{ fontSize: 16 }}>sort</span>
-            Resolution Date {sortDesc ? '↓' : '↑'}
-          </button>
-          <button className={styles.exportBtn}>
-            <span className="material-icons-outlined" style={{ fontSize: 18 }}>download</span>
-            Export CSV
-          </button>
+
+        {/* Search */}
+        <div className={styles.searchContainer}>
+          <span className={`material-icons-outlined ${styles.searchIcon}`}>search</span>
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="Search resolved reviews..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      </div>
 
+        {/* List */}
+        <div className={styles.reviewsList}>
+          {loading ? (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', padding: '40px 0', textAlign: 'center' }}>Loading resolved reviews...</p>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--color-text-muted)' }}>
+              <span className="material-icons-outlined" style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>task_alt</span>
+              <p style={{ fontSize: '0.95rem' }}>No resolved reviews {searchQuery ? 'match your search' : 'yet'}.</p>
+            </div>
+          ) : (
+            filtered.map((review) => (
+              <div
+                key={review.id}
+                className={styles.card}
+                onClick={() => setSelectedReview(review)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className={styles.cardHeader}>
+                  <span className={styles.refId}>{review.referenceNumber}</span>
+                  <span className={styles.date}>{review.shortDate}</span>
+                </div>
 
+                <div className={styles.cardMeta}>
+                  <StarRating rating={review.rating} />
+                  <span className={`${styles.badge} ${styles.badgeResolved}`}>RESOLVED</span>
+                  {review.isAnonymous && (
+                    <span className={`${styles.badge} ${styles.badgeAnonymous}`}>ANONYMOUS</span>
+                  )}
+                </div>
 
-      {/* Search */}
-      <div className={styles.searchContainer}>
-        <span className={`material-icons-outlined ${styles.searchIcon}`}>search</span>
-        <input 
-          type="text" 
-          className={styles.searchInput} 
-          placeholder="Search resolved reviews..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+                <p className={styles.comment}>{review.text}</p>
 
-      {/* List */}
-      <div className={styles.reviewsList}>
-        {filteredAndSorted.length === 0 ? (
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: 10 }}>No resolved reviews match your filters.</p>
-        ) : (
-          filteredAndSorted.map((review) => (
-            <div 
-              key={review.id} 
-              className={styles.card}
-              onClick={() => setSelectedReview(review)}
-              style={{ cursor: 'pointer' }}
-            >
-              
-
-
-              <div className={styles.cardHeader}>
-                <span className={styles.refId}>{review.id}</span>
-                <span className={styles.date}>{review.shortDate}</span>
-              </div>
-              
-              <div className={styles.cardMeta}>
-                <StarRating rating={review.rating} />
-                <span className={`${styles.badge} ${styles.badgeResolved}`}>RESOLVED</span>
-                {review.isAnonymous && (
-                  <span className={`${styles.badge} ${styles.badgeAnonymous}`}>ANONYMOUS</span>
+                {review.author && (
+                  <div className={styles.authorContainer}>
+                    <span className={`material-icons-outlined ${styles.authorIcon}`}>person_outline</span>
+                    <span className={styles.authorName}>
+                      {review.author.name}{review.author.email ? ` · ${review.author.email}` : ''}
+                    </span>
+                  </div>
                 )}
               </div>
-
-              <p className={styles.comment}>{review.text}</p>
-
-              {review.author && (
-                <div className={styles.authorContainer}>
-                  <span className={`material-icons-outlined ${styles.authorIcon}`}>person_outline</span>
-                  <span className={styles.authorName}>
-                    {review.author.name} · {review.author.email}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
 
-      <ReviewSidebar 
-        review={selectedReview} 
-        onClose={() => setSelectedReview(null)} 
+      <ReviewSidebar
+        review={selectedReview}
+        onClose={() => setSelectedReview(null)}
         onUpdate={handleUpdateReview}
       />
-    </div>
+    </>
   );
 }
 

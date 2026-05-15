@@ -24,6 +24,9 @@ A sophisticated, multi-platform feedback ecosystem developed by **EliTech CreaTi
 
 - **Framework**: [React 19](https://react.dev/)
 - **Build Tool**: [Vite 8](https://vitejs.dev/)
+- **Backend**: Node.js & Express (Deployed on Railway)
+- **Database**: [Supabase](https://supabase.com/) (PostgreSQL + Auth)
+- **Payments**: [Paystack](https://paystack.com/)
 - **Routing**: [React Router 7](https://reactrouter.com/)
 - **Styling**: Vanilla CSS (Modular & Design Tokens)
 - **State Management**: React Context & Custom Hooks
@@ -51,7 +54,9 @@ A sophisticated, multi-platform feedback ecosystem developed by **EliTech CreaTi
 ## 📂 Project Structure
 
 ```text
+server/             # Express.js backend for Railway
 src/
+├── api/            # API client for Railway backend
 ├── components/     # Reusable UI components
 ├── context/        # Global state and theme providers
 ├── layouts/        # Page structural templates (Admin/Public)
@@ -60,6 +65,7 @@ src/
 │   └── public/     # Guest-facing feedback interfaces
 ├── store/          # Data persistence and logic
 └── styles/         # Global design system and variables
+supabase/           # Database migrations and legacy functions
 ```
 
 ---

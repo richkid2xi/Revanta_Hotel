@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { registerHotel } from '../api';
 import './SignUp.css';
 
 const steps = [
@@ -31,18 +32,77 @@ const ghanaRegions = {
 
 export default function SignUp() {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Form State
+  const [businessName, setBusinessName] = useState('');
+  const [businessType, setBusinessType] = useState('hotel');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('premium');
+  
+  const [fullName, setFullName] = useState('');
+  const [jobTitle, setJobTitle] = useState('owner');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [showPassword, setShowPassword] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('momo');
-  const [businessName, setBusinessName] = useState('');
 
   const handleNext = (e) => {
     e.preventDefault();
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
+    } else {
+      handleFinalSubmit();
+    }
+  };
+
+  const handleFinalSubmit = async () => {
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const registrationData = {
+        hotelName: businessName,
+        type: businessType,
+        region: selectedRegion,
+        city: selectedCity,
+        website: '', // Optional for now
+        logoUrl: '', // Optional for now
+        ownerName: fullName,
+        ownerEmail: email,
+        ownerPhone: phone,
+        jobTitle: jobTitle,
+        plan: selectedPlan,
+        password: password,
+        branchCount: 1, // Default for signup
+        branches: [{ name: 'Main Branch', location: selectedCity }],
+      };
+
+      const result = await registerHotel(registrationData);
+      
+      if (result.authorization_url) {
+        // Redirect to Paystack
+        window.location.href = result.authorization_url;
+      } else {
+        // Fallback or legacy flow
+        setCurrentStep(5);
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -137,8 +197,11 @@ export default function SignUp() {
                 <div className="form-group">
                   <label htmlFor="businessType">BUSINESS TYPE</label>
                   <div className="select-wrapper">
-                    <select id="businessType" defaultValue="">
-                      <option value="" disabled hidden>Select type</option>
+                    <select 
+                      id="businessType" 
+                      value={businessType} 
+                      onChange={(e) => setBusinessType(e.target.value)}
+                    >
                       <option value="hotel">Hotel / Lodge</option>
                       <option value="restaurant">Restaurant / Café</option>
                       <option value="government">Government Office</option>
@@ -295,17 +358,27 @@ export default function SignUp() {
               <form onSubmit={handleNext} className="auth-form">
                 <div className="form-group">
                   <label htmlFor="fullName">FULL NAME</label>
-                  <input type="text" id="fullName" placeholder="Kwame Asante" />
+                  <input 
+                    type="text" 
+                    id="fullName" 
+                    placeholder="Kwame Asante" 
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <div className="form-row-2">
                   <div className="form-group">
                     <label htmlFor="jobTitle">JOB TITLE</label>
                     <div className="select-wrapper">
-                      <select id="jobTitle" defaultValue="">
-                        <option value="" disabled hidden>Select title</option>
-                        <option value="gm">General Manager</option>
+                      <select 
+                        id="jobTitle" 
+                        value={jobTitle}
+                        onChange={(e) => setJobTitle(e.target.value)}
+                      >
                         <option value="owner">Owner / Proprietor</option>
+                        <option value="gm">General Manager</option>
                         <option value="front_desk">Front Desk Manager</option>
                         <option value="admin">Administrator</option>
                         <option value="it">IT Administrator</option>
@@ -315,13 +388,27 @@ export default function SignUp() {
                   </div>
                   <div className="form-group">
                     <label htmlFor="phone">PHONE</label>
-                    <input type="text" id="phone" placeholder="+233 XX XXX XXXX" />
+                    <input 
+                      type="text" 
+                      id="phone" 
+                      placeholder="+233 XX XXX XXXX" 
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="accountEmail">EMAIL</label>
-                  <input type="email" id="accountEmail" placeholder="you@business.com" />
+                  <input 
+                    type="email" 
+                    id="accountEmail" 
+                    placeholder="you@business.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <div className="form-row-2">
@@ -332,6 +419,9 @@ export default function SignUp() {
                         type={showPassword ? 'text' : 'password'}
                         id="accountPassword"
                         placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
                       />
                       <button
                         type="button"
@@ -343,16 +433,17 @@ export default function SignUp() {
                         </span>
                       </button>
                     </div>
-                    <div className="password-strength">
-                      <div className="strength-bar active"></div>
-                      <div className="strength-bar active"></div>
-                      <div className="strength-bar"></div>
-                      <div className="strength-bar"></div>
-                    </div>
                   </div>
                   <div className="form-group">
                     <label htmlFor="confirmPassword">CONFIRM PASSWORD</label>
-                    <input type="password" id="confirmPassword" placeholder="••••••••" />
+                    <input 
+                      type="password" 
+                      id="confirmPassword" 
+                      placeholder="••••••••" 
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
@@ -416,19 +507,21 @@ export default function SignUp() {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="momoNumber">
-                    {paymentMethod === 'momo' ? 'MTN MOMO NUMBER' : 'TELECEL CASH NUMBER'}
-                  </label>
-                  <input
-                    type="text"
-                    id="momoNumber"
-                    placeholder={paymentMethod === 'momo' ? '024 XXX XXXX' : '020 XXX XXXX'}
-                  />
-                </div>
+                {error && <div className="auth-error-msg" style={{ color: '#EF4444', fontSize: '14px', marginBottom: '12px', textAlign: 'center' }}>{error}</div>}
 
-                <button type="submit" className="btn-primary pay-btn" style={{ width: '100%', marginTop: '8px', padding: '14px', fontSize: '15px' }}>
-                  Pay &amp; Activate &mdash; GH¢{selectedPlan === 'starter' ? '200' : '450'}/mo
+                <button 
+                  type="submit" 
+                  className="btn-primary pay-btn" 
+                  disabled={loading}
+                  style={{ width: '100%', marginTop: '8px', padding: '14px', fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  {loading ? (
+                    <>
+                      <div className="spinner-small" /> Processing...
+                    </>
+                  ) : (
+                    `Pay & Activate — GH¢${selectedPlan === 'starter' ? '200' : '450'}/mo`
+                  )}
                 </button>
 
                 <div className="form-actions-row" style={{ marginTop: '24px' }}>

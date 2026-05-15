@@ -1,29 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Navigate, useNavigate } from 'react-router-dom';
-import { findBranchByToken } from '../../store/reviewsStore';
-import styles from './ReviewPage.module.css'; // Reuse existing styles for loading/error
+import { useParams, useNavigate } from 'react-router-dom';
+import { getHotelByToken } from '../../api';
+import styles from './ReviewPage.module.css';
 
 function ReviewRedirect() {
   const { token } = useParams();
   const navigate = useNavigate();
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (token) {
-      const result = findBranchByToken(token);
-      if (result) {
-        // Set the active session context for the public review page
-        localStorage.setItem('revanta_session_hotel_id', result.hotelId);
-        localStorage.setItem('revanta_active_branch', result.branch.id);
-        
-        // Fast redirect to the real form
-        setTimeout(() => {
-          navigate('/review', { replace: true });
-        }, 300);
-      } else {
-        setError(true);
+    async function fetchData() {
+      if (token) {
+        try {
+          const result = await getHotelByToken(token);
+          if (result) {
+            // Set the active session context
+            localStorage.setItem('revanta_active_hotel_name', result.hotelName);
+            localStorage.setItem('revanta_active_hotel_id', result.hotelId);
+            localStorage.setItem('revanta_active_branch_name', result.branchName);
+            localStorage.setItem('revanta_active_branch_id', result.branchId);
+            localStorage.setItem('revanta_active_logo_url', result.logoUrl || '');
+            localStorage.setItem('revanta_active_services', JSON.stringify(result.enabledServices));
+            
+            // Redirect to the real form
+            navigate('/review', { replace: true });
+          }
+        } catch (err) {
+          console.error('Error fetching hotel data:', err);
+          setError(err.response?.data?.error || "Invalid Review Link");
+        }
       }
     }
+    fetchData();
   }, [token, navigate]);
 
   if (error) {

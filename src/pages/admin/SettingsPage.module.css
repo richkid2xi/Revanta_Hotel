@@ -1,43 +1,30 @@
-/* SettingsPage.module.css — consistent with ReviewsPage design system */
-
+/* ── Page ──────────────────────────────────────────────── */
 .page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
 }
 
-/* ─── Header ─────────────────────────────────────────── */
+/* ── Page Header ───────────────────────────────────────── */
 .headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.titleContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  margin-bottom: 4px;
 }
 
 .pageTitle {
   font-family: var(--font-heading);
-  font-size: 1.8rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: var(--color-text-primary);
-  margin: 0;
   letter-spacing: -0.02em;
 }
 
 .pageSubtitle {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
-  margin: 0;
 }
 
-/* ─── Cards ──────────────────────────────────────────── */
+/* ── Cards ─────────────────────────────────────────────── */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -46,7 +33,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 100%;
 }
 
 .cardTitle {
@@ -54,16 +40,92 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0;
-  letter-spacing: -0.01em;
 }
 
-.cardFooter {
+/* ── Subscription Section ──────────────────────────────── */
+.subContent {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* ─── Form elements ───────────────────────────────────── */
+.subStatusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface-subtle);
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.subMainInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subPlanLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.subPlanValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.subBadge {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.subBadgeActive {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--color-primary);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+.subBadgeExpired {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.subDetailRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.subDetailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.subDetailLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.subDetailValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ── General Forms ─────────────────────────────────────── */
 .formGroup {
   display: flex;
   flex-direction: column;
@@ -73,227 +135,207 @@
 .label {
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.07em;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  font-family: var(--font-body);
+  letter-spacing: 0.05em;
 }
 
 .input {
-  width: 100%;
-  background: var(--color-bg);
+  background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 11px 14px;
-  font-size: 0.9rem;
+  padding: 10px 14px;
   color: var(--color-text-primary);
-  font-family: var(--font-body);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  box-sizing: border-box;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--color-primary-light);
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
-}
-
-.input[readonly] {
-  opacity: 0.7;
-  cursor: default;
-}
-
-/* ─── Buttons ─────────────────────────────────────────── */
-.btnPrimary {
-  background: var(--color-primary-light);
-  color: #fff;
-  border: 1px solid var(--color-primary-light);
-  border-radius: var(--radius-md);
-  padding: 10px 18px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: var(--font-body);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: background var(--transition-fast);
-  white-space: nowrap;
-}
-
-.btnPrimary:hover {
-  background: var(--color-primary);
   border-color: var(--color-primary);
+  background: var(--color-surface);
 }
 
-.btnSecondary {
-  background: transparent;
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 10px 18px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: var(--font-body);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
-  white-space: nowrap;
-}
-
-.btnSecondary:hover {
-  background: var(--color-surface-subtle);
-  border-color: var(--color-primary-light);
-}
-
-/* ─── URL row ─────────────────────────────────────────── */
 .urlGroup {
   display: flex;
   gap: 10px;
-  align-items: center;
 }
 
 .urlGroup .input {
   flex: 1;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
-  font-weight: 600;
 }
 
-/* ─── QR Section ──────────────────────────────────────── */
+/* ── QR Section ────────────────────────────────────────── */
 .qrSection {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
+  padding: 16px;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
 .qrBox {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  background: #fff;
+  padding: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 240px;
-  height: 240px;
 }
 
-.qrBox canvas {
-  border-radius: 4px;
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
+.qrContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
 }
 
 .qrActions {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .qrFooterText {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  text-align: center;
+  line-height: 1.5;
   margin: 0;
-  font-family: var(--font-body);
 }
 
-/* ─── Toggle ──────────────────────────────────────────── */
+/* ── Toggles ───────────────────────────────────────────── */
 .toggleRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
 }
 
 .toggleInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .toggleTitle {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--color-text-primary);
-  font-family: var(--font-body);
 }
 
 .toggleDesc {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted);
-  font-family: var(--font-body);
 }
 
 .toggleBtn {
-  position: relative;
-  width: 46px;
-  height: 26px;
-  border-radius: 13px;
+  width: 44px;
+  height: 24px;
+  border-radius: var(--radius-full);
   border: none;
+  position: relative;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color var(--transition-fast);
+  transition: background 0.3s ease;
 }
 
 .toggleCircle {
-  position: absolute;
-  top: 3px;
   width: 20px;
   height: 20px;
   background: #fff;
   border-radius: 50%;
-  transition: left var(--transition-fast);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  top: 2px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── System Info ─────────────────────────────────────── */
+/* ── Buttons ───────────────────────────────────────────── */
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btnPrimary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btnPrimary:hover {
+  background: var(--color-primary-light);
+}
+
+.btnSecondary {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btnSecondary:hover {
+  background: var(--color-surface-subtle);
+}
+
+/* ── Info ──────────────────────────────────────────────── */
 .infoList {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 12px;
 }
 
 .infoRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--color-border);
 }
 
-.infoRow:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.infoRow:first-child {
-  padding-top: 0;
-}
-
 .infoLabel {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  font-family: var(--font-body);
 }
 
 .infoValue {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-text-primary);
-  font-family: 'Courier New', monospace;
 }
 
-.infoValueText {
+.loadingText {
+  color: var(--color-text-muted);
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  text-align: right;
+  padding: 16px 0;
+  text-align: center;
 }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .subDetailRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .qrSection {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .urlGroup {
+    flex-direction: column;
+  }
+}
+
+.subDetailInfo { border-left: 3px solid #F9A825; background: rgba(249, 168, 37, 0.05); } .subDetailInfo .subDetailValue { font-size: 0.8rem; font-weight: 400; color: var(--color-text-muted); }

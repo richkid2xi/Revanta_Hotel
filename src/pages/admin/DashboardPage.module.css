@@ -658,3 +658,5 @@
   }
 }
 
+
+.loaderSmall { width: 20px; height: 20px; border: 2px solid rgba(13, 148, 136, 0.2); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.6s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } .emptyState { background: var(--color-surface); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; color: var(--color-text-muted); } .emptyState span:first-child { font-size: 40px; color: var(--color-border); } .emptyState p { font-size: 1rem; font-weight: 600; color: var(--color-text-secondary); margin: 0; } .emptyState span:last-child { font-size: 0.85rem; max-width: 240px; }

@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getReviews, updateReview as storeUpdateReview, getHotelSettings } from '../../store/reviewsStore';
+import { fetchStats, fetchReviews, getHotelSettings, getCachedDashboard, setDashboardCache } from '../../store/reviewsStore';
+import toast from 'react-hot-toast';
 import styles from './DashboardPage.module.css';
 
 /* ── Star Rating ───────────────────────────────────────── */
@@ -43,47 +44,99 @@ function getSatisfactionClass(score, styles) {
 /* ── Dashboard Page ────────────────────────────────────── */
 function DashboardPage() {
   const today = useMemo(() => formatDate(), []);
-  const [allReviews, setAllReviews] = useState(() => getReviews());
+  const [allReviews, setAllReviews] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({ totalReviews: 0, unreadReviews: 0, readReviews: 0, resolvedReviews: 0, avgRating: 0 });
   const [hotelName, setHotelName] = useState(() => getHotelSettings().name);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = async (force = false) => {
+    setRefreshing(true);
+    try {
+      if (!force) {
+        const cached = getCachedDashboard();
+        if (cached && cached.stats && cached.reviews) {
+          setDashboardStats(cached.stats);
+          setAllReviews(cached.reviews);
+          setLoading(false);
+          setRefreshing(false);
+          return;
+        }
+      }
+
+      const [statsData, reviewsData] = await Promise.all([
+        fetchStats(),
+        fetchReviews()
+      ]);
+      const newStats = {
+        ...statsData,
+        readReviews: statsData.readReviews ?? 0
+      };
+      const newReviews = reviewsData.slice(0, 5);
+      
+      setDashboardStats(newStats);
+      setAllReviews(newReviews);
+      setDashboardCache(newStats, newReviews);
+      
+      if (force) toast.success('Dashboard refreshed');
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      toast.error('Failed to refresh data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
+    loadData();
+
     const handleSettingsUpdate = () => setHotelName(getHotelSettings().name);
     window.addEventListener('revanta_settings_updated', handleSettingsUpdate);
     return () => window.removeEventListener('revanta_settings_updated', handleSettingsUpdate);
   }, []);
 
   const stats = useMemo(() => {
-    const total = allReviews.length;
-    const unread = allReviews.filter(r => r.status === 'unread').length;
-    const read = allReviews.filter(r => r.status === 'read').length;
-    const resolved = allReviews.filter(r => r.status === 'resolved').length;
     return [
-      { id: 'total',    label: 'Total Reviews',  value: total,    icon: 'hotel_class',        color: 'neutral' },
-      { id: 'unread',   label: 'Unread',         value: unread,   icon: 'mark_email_unread',  color: 'amber',   sub: 'Needs response' },
-      { id: 'read',     label: 'Read',           value: read,     icon: 'drafts',             color: 'neutral', sub: 'Reviewed' },
-      { id: 'resolved', label: 'Resolved',       value: resolved, icon: 'check_circle',       color: 'green',   sub: 'Closed cases' },
+      { id: 'total',    label: 'Total Reviews',  value: dashboardStats.totalReviews,    icon: 'hotel_class',        color: 'neutral' },
+      { id: 'unread',   label: 'Unread',         value: dashboardStats.unreadReviews,   icon: 'mark_email_unread',  color: 'amber',   sub: 'Needs response' },
+      { id: 'read',     label: 'Read',           value: dashboardStats.readReviews,     icon: 'drafts',             color: 'neutral', sub: 'Acknowledged' },
+      { id: 'resolved', label: 'Resolved',       value: dashboardStats.resolvedReviews, icon: 'check_circle',       color: 'green',   sub: 'Closed cases' },
     ];
-  }, [allReviews]);
+  }, [dashboardStats]);
 
-  const avgScore = useMemo(() => {
-    const active = allReviews.filter(r => r.status !== 'resolved');
-    if (!active.length) return 0;
-    return (active.reduce((sum, r) => sum + r.rating, 0) / active.length).toFixed(1);
-  }, [allReviews]);
+  const avgScore = dashboardStats.avgRating;
 
-  const recentSubmissions = useMemo(() =>
-    [...allReviews]
-      .filter(r => r.status !== 'resolved')
-      .sort((a, b) => b.rawDate - a.rawDate)
-      .slice(0, 5),
-    [allReviews]
-  );
+  const recentSubmissions = allReviews;
 
-  const handleUpdateReview = (id, updates) => {
-    const updated = storeUpdateReview(id, updates);
-    setAllReviews(updated);
+  const handleUpdateReview = async (id, updates) => {
+    // Optimistic update
+    setAllReviews(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    // Sync to backend
+    try {
+      const { updateReviewStatus } = await import('../../store/reviewsStore');
+      if (updates.status) {
+        await updateReviewStatus(id, updates.status);
+        if (updates.status === 'read') toast.success('Marked as read');
+        if (updates.status === 'resolved') toast.success('Marked as resolved');
+        // Reload stats so counts reflect immediately
+        loadData(true);
+      }
+    } catch (err) {
+      console.error('Failed to sync review update:', err);
+      toast.error('Failed to update status');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className={styles.page} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div className={styles.loaderSmall} style={{ width: 40, height: 40 }}></div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -96,9 +149,35 @@ function DashboardPage() {
             <span style={{ textTransform: 'uppercase' }}>{hotelName}</span>&nbsp;·&nbsp;Guest Review Dashboard
           </p>
         </div>
-        <div className={styles.dateBadge}>
-          <span className="material-icons-outlined" style={{ fontSize: 16 }}>calendar_today</span>
-          {today}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button 
+            onClick={() => loadData(true)} 
+            disabled={refreshing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 12px', borderRadius: '8px',
+              border: '1px solid var(--color-border)',
+              background: 'transparent', color: 'var(--color-text-main)',
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              opacity: refreshing ? 0.7 : 1,
+              fontFamily: 'var(--font-body)', fontSize: '0.85rem'
+            }}
+          >
+            <span 
+              className="material-icons-outlined" 
+              style={{ 
+                fontSize: 16, 
+                animation: refreshing ? 'spin 1s linear infinite' : 'none' 
+              }}
+            >
+              refresh
+            </span>
+            Refresh
+          </button>
+          <div className={styles.dateBadge}>
+            <span className="material-icons-outlined" style={{ fontSize: 16 }}>calendar_today</span>
+            {today}
+          </div>
         </div>
       </div>
 
@@ -152,7 +231,11 @@ function DashboardPage() {
 
         <div className={styles.submissionList}>
           {recentSubmissions.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>No submissions yet.</p>
+            <div className={styles.emptyState}>
+              <span className="material-icons-outlined">inbox</span>
+              <p>No guest reviews yet</p>
+              <span>Share your feedback QR code to start receiving responses.</span>
+            </div>
           ) : (
             recentSubmissions.map((sub) => (
               <SubmissionCard
@@ -187,7 +270,7 @@ function DashboardPage() {
 
 /* ── Submission Card ───────────────────────────────────── */
 function SubmissionCard({ submission, onUpdate, onOpen }) {
-  const { id, status, rating, shortDate, date, text, author } = submission;
+  const { id, referenceNumber, status, rating, shortDate, date, text, author } = submission;
   const isUnread = status === 'unread';
 
   const handleMarkRead = (e) => {
@@ -215,7 +298,7 @@ function SubmissionCard({ submission, onUpdate, onOpen }) {
       {/* Row 1: ref + badge + date */}
       <div className={styles.subCardTop}>
         <div className={styles.subCardMeta}>
-          <span className={styles.subRef}>{id}</span>
+          <span className={styles.subRef}>{referenceNumber}</span>
           <span className={`${styles.subBadge} ${isUnread ? styles.subBadgeUnread : styles.subBadgeRead}`}>
             {isUnread ? 'UNREAD' : 'READ'}
           </span>

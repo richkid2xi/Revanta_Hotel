@@ -52,10 +52,10 @@ function DashboardPage() {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = async (force = false) => {
-    setRefreshing(true);
+  const loadData = async (force = false, silent = false) => {
+    if (!silent) setRefreshing(true);
     try {
-      if (!force) {
+      if (!force && !silent) {
         const cached = getCachedDashboard();
         if (cached && cached.stats && cached.reviews) {
           setDashboardStats(cached.stats);
@@ -80,10 +80,10 @@ function DashboardPage() {
       setAllReviews(newReviews);
       setDashboardCache(newStats, newReviews);
       
-      if (force) toast.success('Dashboard refreshed');
+      if (force && !silent) toast.success('Dashboard refreshed');
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      toast.error('Failed to refresh data');
+      if (!silent) toast.error('Failed to refresh data');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -112,8 +112,34 @@ function DashboardPage() {
   const recentSubmissions = allReviews;
 
   const handleUpdateReview = async (id, updates) => {
-    // Optimistic update
+    const prevReviews = [...allReviews];
+    const prevStats = { ...dashboardStats };
+
+    // Find the review to get its current status
+    const reviewToUpdate = allReviews.find(r => r.id === id);
+    if (!reviewToUpdate) return;
+
+    // Optimistic UI Update
     setAllReviews(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    
+    // Optimistic Stats Update
+    if (updates.status && updates.status !== reviewToUpdate.status) {
+      setDashboardStats(prev => {
+        const next = { ...prev };
+        // Decrease old status count
+        if (reviewToUpdate.status === 'unread') next.unreadReviews--;
+        if (reviewToUpdate.status === 'read') next.readReviews--;
+        if (reviewToUpdate.status === 'resolved') next.resolvedReviews--;
+        
+        // Increase new status count
+        if (updates.status === 'unread') next.unreadReviews++;
+        if (updates.status === 'read') next.readReviews++;
+        if (updates.status === 'resolved') next.resolvedReviews++;
+        
+        return next;
+      });
+    }
+
     // Sync to backend
     try {
       const { updateReviewStatus } = await import('../../store/reviewsStore');
@@ -121,12 +147,15 @@ function DashboardPage() {
         await updateReviewStatus(id, updates.status);
         if (updates.status === 'read') toast.success('Marked as read');
         if (updates.status === 'resolved') toast.success('Marked as resolved');
-        // Reload stats so counts reflect immediately
-        loadData(true);
+        // Silent reload to ensure everything is perfectly synced with DB
+        loadData(true, true);
       }
     } catch (err) {
       console.error('Failed to sync review update:', err);
       toast.error('Failed to update status');
+      // Rollback on error
+      setAllReviews(prevReviews);
+      setDashboardStats(prevStats);
     }
   };
 

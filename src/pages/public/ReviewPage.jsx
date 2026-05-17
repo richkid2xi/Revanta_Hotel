@@ -33,10 +33,10 @@ const RATING_OPTIONS = [
 ];
 
 function generateRefNumber() {
-  const digits = '0123456789';
+  const chars = '0123456789ABCDEF';
   const rand = (len) =>
-    Array.from({ length: len }, () => digits[Math.floor(Math.random() * digits.length)]).join('');
-  return `STY-2026-${rand(5)}`;
+    Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `REV-${rand(8)}`;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -136,6 +136,7 @@ function ReviewPage() {
     setIsSubmitting(true);
     try {
       const reviewData = {
+        reference: refNumber,
         hotelId: hotelId,
         branchId: branchId,
         overallRating: mainRatings['q1'] || 0,

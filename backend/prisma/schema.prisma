@@ -79,6 +79,8 @@ model Review {
   createdAt       DateTime @default(now()) @map("created_at")
   notifications   Notification[]
 
+  @@index([hotelId, createdAt])
+  @@index([hotelId, status])
   @@map("reviews")
 }
 

@@ -34,10 +34,10 @@ function ReviewsPage() {
   useEffect(() => {
     loadReviews();
 
-    // Auto-refresh every 60 seconds
+    // Auto-refresh every 15 seconds to keep data consistent without visible reload
     const interval = setInterval(() => {
       loadReviews();
-    }, 60000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [location.state]);

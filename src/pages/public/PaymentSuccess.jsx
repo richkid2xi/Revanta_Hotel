@@ -14,7 +14,7 @@ function PaymentSuccess() {
   useEffect(() => {
     const reference = searchParams.get('reference') || searchParams.get('trxref');
     if (!reference) {
-      setStatus('failed');
+      setStatus('cancelled');
       return;
     }
 
@@ -22,8 +22,9 @@ function PaymentSuccess() {
       .then(res => {
         if (res.status === 'success') {
           setStatus('success');
-          // Redirect to dashboard after 3 seconds
           setTimeout(() => navigate('/admin/overview', { replace: true }), 3000);
+        } else if (res.status === 'abandoned' || res.status === 'failed') {
+          setStatus('cancelled');
         } else {
           setStatus('failed');
         }
@@ -74,17 +75,53 @@ function PaymentSuccess() {
           <p style={{ color: 'var(--color-text-muted)', textAlign: 'center' }}>
             We couldn't verify your payment. Please contact support if you were charged.
           </p>
-          <button
-            onClick={() => navigate('/signin')}
-            style={{
-              marginTop: 8, padding: '10px 24px',
-              background: '#0D9488', color: '#fff',
-              border: 'none', borderRadius: 8,
-              fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem'
-            }}
-          >
-            Go to Sign In
-          </button>
+          <div style={{ display: 'flex', gap: '12px', marginTop: 16 }}>
+            <button
+              onClick={() => navigate('/signin')}
+              style={{
+                padding: '10px 24px',
+                background: '#0D9488', color: '#fff',
+                border: 'none', borderRadius: 8,
+                fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem'
+              }}
+            >
+              Go to Sign In
+            </button>
+          </div>
+        </>
+      )}
+
+      {status === 'cancelled' && (
+        <>
+          <span className="material-icons-round" style={{ fontSize: 56, color: '#F59E0B' }}>cancel</span>
+          <h2 style={{ color: 'var(--color-text-primary)', margin: 0 }}>Payment Cancelled</h2>
+          <p style={{ color: 'var(--color-text-muted)', textAlign: 'center' }}>
+            You cancelled the payment or it was abandoned. Please try again or log in to your account.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: 16 }}>
+            <button
+              onClick={() => navigate('/signin')}
+              style={{
+                padding: '10px 24px',
+                background: 'transparent', color: '#0D9488',
+                border: '1px solid #0D9488', borderRadius: 8,
+                fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem'
+              }}
+            >
+              Go to Sign In
+            </button>
+            <button
+              onClick={() => navigate('/signup')}
+              style={{
+                padding: '10px 24px',
+                background: '#0D9488', color: '#fff',
+                border: 'none', borderRadius: 8,
+                fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem'
+              }}
+            >
+              Try Payment Again
+            </button>
+          </div>
         </>
       )}
     </div>

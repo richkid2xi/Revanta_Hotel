@@ -5,6 +5,9 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+// In-memory cache for IP-based rate limiting (spam prevention)
+const ipSpamCache = new Map();
+
 const router = express.Router();
 const prisma = new PrismaClient();
 
@@ -28,6 +31,10 @@ const authenticate = async (req, res, next) => {
     const now = new Date();
     const gracePeriodEnd = hotel.subscriptionEnd ? new Date(hotel.subscriptionEnd.getTime() + 72 * 60 * 60 * 1000) : null;
 
+    if (hotel.subscriptionStatus === 'pending_payment') {
+      return res.status(403).json({ error: 'Please complete your payment to access your account.', code: 'PAYMENT_REQUIRED' });
+    }
+
     if (hotel.subscriptionStatus === 'deactivated' || (gracePeriodEnd && now > gracePeriodEnd)) {
       if (hotel.subscriptionStatus !== 'deactivated') {
         // Auto-deactivate if past grace period
@@ -36,7 +43,7 @@ const authenticate = async (req, res, next) => {
           data: { subscriptionStatus: 'deactivated', isActive: false }
         });
       }
-      return res.status(403).json({ error: 'Subscription expired and grace period ended. Please renew to access your account.' });
+      return res.status(403).json({ error: 'Subscription expired and grace period ended. Please renew to access your account.', code: 'SUBSCRIPTION_EXPIRED' });
     }
 
     req.hotelId = decoded.hotelId;
@@ -58,7 +65,14 @@ router.post('/register-hotel', async (req, res) => {
     const email = ownerEmail || owner_email;
     
     const existing = await prisma.hotel.findUnique({ where: { ownerEmail: email } });
-    if (existing) return res.status(400).json({ error: 'Email already registered' });
+    if (existing) {
+      if (existing.subscriptionStatus === 'pending_payment') {
+        await prisma.branch.deleteMany({ where: { hotelId: existing.id } });
+        await prisma.hotel.delete({ where: { id: existing.id } });
+      } else {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+    }
 
     const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
@@ -95,6 +109,7 @@ router.post('/register-hotel', async (req, res) => {
     const paystackRes = await axios.post('https://api.paystack.co/transaction/initialize', {
       email: email,
       amount: amount * 100,
+      currency: 'GHS',
       callback_url: `${process.env.FRONTEND_URL}/payment-success`,
       metadata: {
         hotel_id: hotel.id,
@@ -119,7 +134,8 @@ router.post('/register-hotel', async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const errorMsg = error.response?.data?.message || error.message;
+    res.status(500).json({ error: errorMsg });
   }
 });
 
@@ -135,6 +151,10 @@ router.post('/login', async (req, res) => {
 
     if (!hotel || !hotel.password) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (hotel.subscriptionStatus === 'pending_payment') {
+      return res.status(403).json({ error: 'Account not activated. Please complete billing first.' });
     }
 
     const isValid = await bcrypt.compare(password, hotel.password);
@@ -205,16 +225,19 @@ router.get('/stats', authenticate, async (req, res) => {
 // Fetch Reviews
 router.get('/reviews', authenticate, async (req, res) => {
   try {
-    const { branchId, status } = req.query;
+    const { branchId, status, limit } = req.query;
     const hotelId = req.hotelId;
 
     const where = { hotelId };
     if (branchId) where.branchId = branchId;
     if (status) where.status = status;
 
+    const takeCount = limit ? parseInt(limit, 10) : 500;
+
     const reviews = await prisma.review.findMany({
       where,
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: takeCount
     });
 
     res.json(reviews);
@@ -278,11 +301,20 @@ router.get('/subscription', authenticate, async (req, res) => {
 router.post('/subscription/renew', authenticate, async (req, res) => {
   try {
     const { plan } = req.body;
+
+    if (req.hotel.subscriptionEnd) {
+       const daysUntilEnd = (req.hotel.subscriptionEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+       if (daysUntilEnd > 0) {
+         return res.status(400).json({ error: 'You can only renew your subscription when it ends.' });
+       }
+    }
+
     const amount = plan === 'premium' ? 500 : 250;
 
     const paystackRes = await axios.post('https://api.paystack.co/transaction/initialize', {
       email: req.hotel.ownerEmail,
       amount: amount * 100,
+      currency: 'GHS',
       callback_url: `${process.env.FRONTEND_URL}/payment-success`,
       metadata: {
         hotel_id: req.hotelId,
@@ -295,7 +327,8 @@ router.post('/subscription/renew', authenticate, async (req, res) => {
 
     res.json({ authorization_url: paystackRes.data.data.authorization_url });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const errorMsg = error.response?.data?.message || error.message;
+    res.status(500).json({ error: errorMsg });
   }
 });
 
@@ -317,7 +350,7 @@ router.get('/verify-payment', async (req, res) => {
         : new Date();
       
       const newEnd = new Date(currentEnd);
-      newEnd.setMonth(newEnd.getMonth() + 1);
+      newEnd.setDate(newEnd.getDate() + 30); // 30 days exactly
 
       await prisma.hotel.update({
         where: { id: hotel_id },
@@ -329,7 +362,7 @@ router.get('/verify-payment', async (req, res) => {
         }
       });
 
-      await prisma.paymentReference.update({
+      await prisma.paymentReference.updateMany({
         where: { reference },
         data: { status: 'success' }
       });
@@ -337,7 +370,7 @@ router.get('/verify-payment', async (req, res) => {
       return res.json({ status: 'success' });
     }
 
-    res.json({ status: 'pending' });
+    res.json({ status: paystackRes.data.data.status || 'failed' });
 
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -388,14 +421,24 @@ router.get('/get-hotel-by-token', async (req, res) => {
 router.post('/submit-review', async (req, res) => {
   try {
     const { 
+      reference: clientRef,
       hotelId, branchId, overallRating, selectedServices, 
       generalScores, serviceScores, writtenComment, 
       guestName, guestEmail, guestPhone, isAnonymous 
     } = req.body;
 
-    const reference = `REV-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    const reference = clientRef || `REV-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
-    // Basic Spam Prevention: Check for recent review from same email/phone
+    // IP-based spam prevention (15-minute cooldown per IP)
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (clientIp) {
+      const lastSubmission = ipSpamCache.get(clientIp);
+      if (lastSubmission && (Date.now() - lastSubmission) < 15 * 60 * 1000) {
+        return res.status(429).json({ error: 'You have submitted a review recently. Please try again in 15 minutes.' });
+      }
+    }
+
+    // Basic Spam Prevention: Check for recent review from same email/phone (1 hour window)
     if (guestEmail || guestPhone) {
       const recent = await prisma.review.findFirst({
         where: {
@@ -404,7 +447,7 @@ router.post('/submit-review', async (req, res) => {
             guestEmail ? { guestEmail } : null,
             guestPhone ? { guestPhone } : null
           ].filter(Boolean),
-          createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) } // 1 hour window
+          createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) }
         }
       });
       if (recent) {
@@ -436,6 +479,10 @@ router.post('/submit-review', async (req, res) => {
         totalScans: { increment: 1 }
       }
     });
+
+    if (clientIp) {
+      ipSpamCache.set(clientIp, Date.now());
+    }
 
     res.json({ 
       success: true, 

@@ -146,9 +146,11 @@ function SettingsPage() {
         window.location.href = res.authorization_url;
       }
     } catch (err) {
-      alert('Failed to initialize renewal. Please try again.');
+      alert(err.response?.data?.error || 'Failed to initialize renewal. Please try again.');
     }
   };
+
+  const canRenew = subscription?.subscriptionEnd ? new Date(subscription.subscriptionEnd) <= new Date() : true;
 
   return (
     <div className={styles.page}>
@@ -202,9 +204,9 @@ function SettingsPage() {
             </div>
 
             <div className={styles.cardFooter}>
-              <button className={styles.btnPrimary} onClick={handleRenew}>
+              <button className={styles.btnPrimary} onClick={handleRenew} disabled={!canRenew}>
                 <span className="material-icons-outlined" style={{ fontSize: 16 }}>refresh</span>
-                Renew Subscription
+                {canRenew ? 'Renew Subscription' : 'Renews at End of Cycle'}
               </button>
             </div>
           </div>
